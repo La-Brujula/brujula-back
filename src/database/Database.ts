@@ -39,6 +39,7 @@ class Database {
         dialect: connectionSettings.dialect as Dialect,
         storage: connectionSettings.storage,
         logging: (msg) => Logger.debug(msg),
+        port: connectionSettings.port
       },
     );
     try {
