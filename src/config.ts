@@ -28,5 +28,6 @@ export default {
     host: process.env.DB_HOST || "localhost",
     database: process.env.DB_DATABASE_NAME || "labrujula",
     storage: process.env.DB_STORAGE_LOCATION || "db.sqlite",
+    port: +(process.env.DB_PORT || 9117)
   },
 };
