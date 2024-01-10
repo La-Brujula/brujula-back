@@ -4,24 +4,34 @@ import {
   IAuthenticationResponseBody,
   IAccount,
   IAccountDTO,
+  IJwtToken,
 } from '@/models/authentication/authentication';
 import { AuthenticationRepository } from '@/repositories/AuthenticationRepository';
 import { ServiceResponse } from '@/shared/classes/serviceResponse';
-import argon2 from 'argon2';
-import { randomBytes } from 'crypto';
+import { randomBytes, createHash } from 'crypto';
 import { Inject, Service } from 'typedi';
 import jwt from 'jsonwebtoken';
-import { handleAsync } from '@/shared/utils/sendError';
 import { AccountMapper } from '@/models/authentication/authenticationMapper';
 import AuthenticationErrors from './AuthenticationErrors';
 import Logger from '@/providers/Logger';
 
+function hashPassword(username: string, password: string) {
+  return createHash('sha256').update(username).update(password).digest('hex');
+}
+
 @Service()
 export default class AuthenticationService {
+  declare tokenSecret: string;
   constructor(
     @Inject('AccountRepository') private readonly authenticationRepository: AuthenticationRepository
     // @Inject('SendGridService') private readonly sendGridService: SendGridService
-  ) {}
+  ) {
+    this.tokenSecret = config.application.jwt_secret;
+
+    if (!this.tokenSecret || this.tokenSecret.length == 0) {
+      throw new Error('AccountService | generateToken | JWT | was not provided in configuration');
+    }
+  }
 
   public async addAccount(
     newAccount: IAuthenticationRequestBody
@@ -31,8 +41,7 @@ export default class AuthenticationService {
       throw AuthenticationErrors.existingAccount;
     }
 
-    const salt = randomBytes(32);
-    const hashedPassword = await argon2.hash(newAccount.password, { salt });
+    const hashedPassword = hashPassword(newAccount.email, newAccount.password);
 
     Logger.debug('AccountService | addAccount | Creating account');
     const userRecord = await this.authenticationRepository.create({
@@ -59,8 +68,8 @@ export default class AuthenticationService {
 
     Logger.debug('AccountService | signIn | Checking password');
 
-    const validPassword = await argon2.verify(userRecord.password, userInput.password);
-    if (!validPassword) {
+    const inputHash = hashPassword(userInput.email, userInput.password);
+    if (inputHash != userRecord.password) {
       throw AuthenticationErrors.wrongCredentials;
     }
 
@@ -68,7 +77,7 @@ export default class AuthenticationService {
     const user: IAccountDTO = AccountMapper.toDto(userRecord);
     const token = this.generateToken(userRecord);
 
-    Logger.debug(`AccountServuce | signIn | Finished`);
+    Logger.debug(`AccountService | signIn | Finished`);
     return ServiceResponse.ok({ user, token });
   }
 
@@ -79,26 +88,30 @@ export default class AuthenticationService {
 
   private generateToken(user: IAccount): string {
     try {
-      Logger.info(`AccountService | generateToken | Start | Sign JWT for userId: ${user.email}`);
-      const today = new Date();
-      const exp = new Date(today.valueOf() + 1000 * 60 * 30);
-
-      const tokenSecret = config.application.jwt_secret;
-
-      if (!tokenSecret || tokenSecret.length == 0) {
-        throw new Error('AccountService | generateToken | JWT | was not provided in configuration');
-      }
+      Logger.debug(`AccountService | generateToken | Start | Sign JWT for userId: ${user.email}`);
       const token = jwt.sign(
         {
           email: user.email,
           role: user.role,
-          exp: exp.getTime() / 1000,
-        },
-        tokenSecret
+        } as IJwtToken,
+        this.tokenSecret,
+        {
+          expiresIn: '1h',
+        }
       );
 
       Logger.debug(`AccountService | generateToken | End | Sign JWT for userId: ${user.email}`);
       return token;
+    } catch (err: any) {
+      Logger.error(`AccountService | generateToken | Error: %s`, err.message);
+      throw err;
+    }
+  }
+
+  private decodeToken(token: string) {
+    try {
+      const decodedToken = jwt.verify(token, this.tokenSecret);
+      if (typeof decodedToken == 'string') throw Error();
     } catch (err: any) {
       Logger.error(`AccountService | generateToken | Error: %s`, err.message);
       throw err;
