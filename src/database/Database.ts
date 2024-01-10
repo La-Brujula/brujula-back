@@ -1,10 +1,14 @@
-import config from "@/config";
-import Logger from "@/providers/Logger";
-import { Dialect, Sequelize } from "sequelize";
+import config from '@/config';
+import Logger from '@/providers/Logger';
+import { DataTypes, Dialect, Model, ModelStatic, Sequelize } from 'sequelize';
+import { Service } from 'typedi';
+import { Account } from './schemas/Account';
 
+@Service()
 class Database {
   private static _instance: Database;
-  private sequelize!: Sequelize;
+  public sequelize!: Sequelize;
+  public models: { Account: ModelStatic<Account> } = {} as any;
 
   public constructor() {
     this.init();
@@ -22,14 +26,10 @@ class Database {
   public async init(): Promise<any> {
     const connectionSettings = config.database;
     if (!connectionSettings) {
-      throw Error(
-        "No connection settings defined for the database in the .env file.",
-      );
+      throw Error('No connection settings defined for the database in the .env file.');
     }
 
-    Logger.info(
-      `Connecting to ${connectionSettings.dialect}:${connectionSettings.database}`,
-    );
+    Logger.info(`Connecting to ${connectionSettings.dialect}:${connectionSettings.database}`);
     this.sequelize = new Sequelize(
       connectionSettings.database,
       connectionSettings.username,
@@ -39,21 +39,33 @@ class Database {
         dialect: connectionSettings.dialect as Dialect,
         storage: connectionSettings.storage,
         logging: (msg) => Logger.debug(msg),
-        port: connectionSettings.port
-      },
+        port: connectionSettings.port,
+      }
     );
     try {
       await this.sequelize.authenticate();
-      Logger.info("Database: Connected to database correctly");
+      this.loadSchemas();
+      Logger.info('Database: Connected to database correctly');
     } catch (error) {
       Logger.error(error);
     }
   }
 
+  async loadSchemas() {
+    const models = ['./schemas/Account'];
+    models.map((route) => {
+      const model = require(route).default(this.sequelize, DataTypes);
+      // @ts-ignore
+      this.models[route.slice(route.lastIndexOf('/') + 1)] = model;
+    });
+
+    this.sequelize.sync()
+  }
+
   public async shutdown() {
-    Logger.info("Shutting down sequelize");
+    Logger.info('Shutting down sequelize');
     await this.sequelize.close();
-    Logger.info("Shut down sequelize");
+    Logger.info('Shut down sequelize');
   }
 }
 

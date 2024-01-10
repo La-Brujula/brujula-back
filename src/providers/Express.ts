@@ -1,12 +1,13 @@
-import express from "express";
-import cors from "cors";
-import fileUpload from "express-fileupload";
-import compression from "compression";
-import helmet from "helmet";
-import morgan from "morgan";
-import requestLog from "@/helpers/requestLogging";
-import { handleError } from "@/helpers/errorHandler";
-import Logger from "./Logger";
+import express from 'express';
+import cors from 'cors';
+import fileUpload from 'express-fileupload';
+import compression from 'compression';
+import helmet from 'helmet';
+import morgan from 'morgan';
+import requestLog from '@/helpers/requestLogging';
+import { handleError } from '@/helpers/errorHandler';
+import Logger from './Logger';
+import Routes from './Routes';
 
 class Express {
   public express: express.Application;
@@ -17,14 +18,14 @@ class Express {
   }
 
   setAppHealthCheck() {
-    this.express.get("/status", (req, res) => {
+    this.express.get('/status', (req, res) => {
       res.sendStatus(200);
     });
   }
 
   setMiddleware() {
     this.express.use(cors({ credentials: true, origin: true }));
-    this.express.use(express.json({ limit: "512kb" }));
+    this.express.use(express.json({ limit: '512kb' }));
     this.express.use(express.urlencoded({ extended: true }));
     this.express.use(compression());
     this.express.use(helmet({ contentSecurityPolicy: false, xssFilter: true }));
@@ -32,8 +33,17 @@ class Express {
     this.express.use(
       fileUpload({
         createParentPath: true,
-      }),
+      })
     );
+  }
+
+  setApiRoutes() {
+    Routes.setApiRoutes(this.express);
+
+    // Handle default 404
+    this.express.use((_, res) => {
+      res.sendStatus(404);
+    });
   }
 
   setErrorHandler() {
@@ -42,14 +52,13 @@ class Express {
 
   public init() {
     this.setAppHealthCheck();
+    this.setApiRoutes();
     const port: Number = +(process.env.PORT || 8000);
     this.express.listen(port, () => {
-      return Logger.info(
-        `Server: Listening @ 'http://localhost:${port}'`,
-      );
+      return Logger.info(`Server: Listening @ 'http://localhost:${port}'`);
     });
     this.setErrorHandler();
-    Logger.debug("Express: Started");
+    Logger.debug('Express: Started');
   }
 }
 
