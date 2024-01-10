@@ -8,6 +8,7 @@ import requestLog from '@/helpers/requestLogging';
 import { handleError } from '@/helpers/errorHandler';
 import Logger from './Logger';
 import Routes from './Routes';
+import config from '@/config';
 
 class Express {
   public express: express.Application;
@@ -53,7 +54,7 @@ class Express {
   public init() {
     this.setAppHealthCheck();
     this.setApiRoutes();
-    const port: Number = +(process.env.PORT || 8000);
+    const port: Number = config.application.port;
     this.express.listen(port, () => {
       return Logger.info(`Server: Listening @ 'http://localhost:${port}'`);
     });

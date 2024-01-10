@@ -19,6 +19,7 @@ export default {
 
   application: {
     name: process.env.APP_NAME,
+    port: +(process.env.APP_PORT || 8000),
     jwt_secret: process.env.JWT_SECRET || 'supersecret',
   },
 
