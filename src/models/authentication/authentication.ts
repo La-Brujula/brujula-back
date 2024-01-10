@@ -31,3 +31,9 @@ export interface IChangePasswordRequestBody {
   password: string;
   resetPin: string;
 }
+
+export interface IJwtToken {
+  email: string;
+  role: string;
+  exp: number;
+}
