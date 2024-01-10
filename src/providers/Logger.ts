@@ -1,17 +1,7 @@
-import winston from "winston";
-import config from "@/config";
-import { format } from "winston";
-const {
-  combine,
-  json,
-  timestamp,
-  colorize,
-  errors,
-  splat,
-  align,
-  printf,
-  uncolorize,
-} = format;
+import winston from 'winston';
+import config from '@/config';
+import { format } from 'winston';
+const { combine, json, timestamp, colorize, errors, splat, align, printf, uncolorize } = format;
 
 const Logger = winston.createLogger({
   level: config.logs.level,
@@ -22,35 +12,36 @@ const Logger = winston.createLogger({
     errors({ stack: true }),
     splat(),
     align(),
-    printf((info) => `[${info.timestamp}] ${info.level}: ${info.message}`),
+    printf((info) => `[${info.timestamp}] ${info.level}: ${info.message}`)
   ),
   transports: [],
 });
 
-if (process.env.NODE_ENV !== "production") {
+if (process.env.NODE_ENV !== 'production') {
   Logger.add(
     new winston.transports.Console({
       format: combine(
         colorize(),
         timestamp({
-          format: "YYYY-MM-DD hh:mm:ss.SSS A",
+          format: 'YYYY-MM-DD hh:mm:ss.SSS A',
         }),
+        errors({ stack: true })
       ),
-    }),
+    })
   );
 } else {
   Logger.add(
     new winston.transports.File({
-      filename: "error.log",
+      filename: 'error.log',
       format: combine(uncolorize(), timestamp(), json()),
-      level: "error",
-    }),
+      level: 'error',
+    })
   );
   Logger.add(
     new winston.transports.File({
-      filename: "combined.log",
+      filename: 'combined.log',
       format: combine(uncolorize(), timestamp(), json()),
-    }),
+    })
   );
 }
 

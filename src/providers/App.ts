@@ -21,9 +21,9 @@ class App {
     await Database.getInstance();
   }
 
-  public loadDependencyInjection() {
+  public async loadDependencyInjection() {
     Logger.debug("Dependency Injector: Starting...");
-    DependencyInjector.init();
+    await DependencyInjector.init();
   }
 }
 

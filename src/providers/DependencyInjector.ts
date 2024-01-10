@@ -1,27 +1,16 @@
-import { Container } from "typedi";
-import Logger from "./Logger";
+import { Container } from 'typedi';
+import Logger from './Logger';
+import Database from '@/database/Database';
 
 class DependencyInjector {
-  private models: { name: string; model: any }[] = [];
-
-  init(): void {
+  async init(): Promise<void> {
     try {
-      this.loadModels();
-      this.models.forEach((m) => {
-        Container.set(m.name, m.model);
-      });
-      Container.set("logger", Logger);
+      Container.set('database', await Database.getInstance());
+      Container.set('logger', Logger);
     } catch (err) {
-      console.log("Failed loading dependency injection");
+      console.log('Failed loading dependency injection');
       throw err;
     }
-  }
-
-  loadModels(): void {
-    // this.models.push({
-    //   name: "userModel",
-    //   model: require("../database/mongodb/schemas/UserSchema").default,
-    // });
   }
 }
 
