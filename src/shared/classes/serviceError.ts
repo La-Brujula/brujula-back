@@ -7,4 +7,11 @@ export class ServiceError extends Error {
     this.errorCode = code;
     this.httpCode = httpStatus;
   }
+
+  public toJson() {
+    return {
+      errorCode: this.errorCode,
+      message: this.message,
+    };
+  }
 }

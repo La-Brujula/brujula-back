@@ -3,10 +3,11 @@ import AuthenticationController from './authentication.controllers';
 import Container from 'typedi';
 import { body } from 'express-validator';
 import handleValidationErrors from '@/shared/utils/handleValidationErrors';
+import authenticateRequest from '@/shared/middleware/authenticateRequest';
 
 const bodyMatchesIAuthenticationRequest = () => [
-  body('email').notEmpty().trim().isEmail(),
-  body('password').isString(),
+  body('email').isEmail().normalizeEmail(),
+  body('password').notEmpty().isLength({ min: 8 }),
 ];
 
 const router: Router = Router();
@@ -32,4 +33,10 @@ export default (app: Router) => {
       await authController.logIn(req, res, next);
     }
   );
+
+  router
+    .route('/me')
+    .all(authenticateRequest)
+    .get(authController.me)
+    .delete(authController.deleteAccount);
 };

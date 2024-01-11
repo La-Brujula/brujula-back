@@ -2,28 +2,21 @@ import config from '@/config';
 import {
   IAuthenticationRequestBody,
   IAuthenticationResponseBody,
-  IAccount,
   IAccountDTO,
-  IJwtToken,
 } from '@/models/authentication/authentication';
-import { AuthenticationRepository } from '@/repositories/AuthenticationRepository';
+import { AccountRepository } from '@/repositories/AuthenticationRepository';
 import { ServiceResponse } from '@/shared/classes/serviceResponse';
-import { randomBytes, createHash } from 'crypto';
 import { Inject, Service } from 'typedi';
-import jwt from 'jsonwebtoken';
 import { AccountMapper } from '@/models/authentication/authenticationMapper';
 import AuthenticationErrors from './AuthenticationErrors';
 import Logger from '@/providers/Logger';
-
-function hashPassword(username: string, password: string) {
-  return createHash('sha256').update(username).update(password).digest('hex');
-}
+import { generateToken, hashPassword } from '@/shared/utils/jwtUtils';
 
 @Service()
 export default class AuthenticationService {
   declare tokenSecret: string;
   constructor(
-    @Inject('AccountRepository') private readonly authenticationRepository: AuthenticationRepository
+    @Inject('AccountRepository') private readonly authenticationRepository: AccountRepository
     // @Inject('SendGridService') private readonly sendGridService: SendGridService
   ) {
     this.tokenSecret = config.application.jwt_secret;
@@ -37,84 +30,82 @@ export default class AuthenticationService {
     newAccount: IAuthenticationRequestBody
   ): Promise<ServiceResponse<IAuthenticationResponseBody>> {
     Logger.debug('AccountService | addAccount | Start');
+    Logger.debug('AccountService | addAccount | Checking if account already exists');
     if (await this.userExists(newAccount.email)) {
       throw AuthenticationErrors.existingAccount;
     }
 
+    Logger.debug('AccountService | addAccount | Hashing password');
     const hashedPassword = hashPassword(newAccount.email, newAccount.password);
 
     Logger.debug('AccountService | addAccount | Creating account');
-    const userRecord = await this.authenticationRepository.create({
+    const accountRecord = await this.authenticationRepository.create({
       email: newAccount.email,
       password: hashedPassword,
     });
     Logger.debug('AccountService | addAccount | Created account');
 
-    const user: IAccountDTO = AccountMapper.toDto(userRecord);
-    const token = this.generateToken(userRecord);
+    const account: IAccountDTO = AccountMapper.toDto(accountRecord);
+    Logger.debug('AccountService | addAccount | Generating token');
+    const token = generateToken(accountRecord, this.tokenSecret);
 
     Logger.debug('AccountService | addAccount | Finished');
-    return ServiceResponse.ok({ user, token });
+    return ServiceResponse.ok({ account, token });
   }
 
   public async logIn(
     userInput: IAuthenticationRequestBody
   ): Promise<ServiceResponse<IAuthenticationResponseBody>> {
     Logger.debug(`AccountService | signIn | Started`);
-    const userRecord = await this.authenticationRepository.findByEmail(userInput.email);
-    if (!userRecord) {
+    const accountRecord = await this.authenticationRepository.findByEmail(userInput.email);
+    if (!accountRecord) {
       throw AuthenticationErrors.accountDoesNotExist;
     }
 
     Logger.debug('AccountService | signIn | Checking password');
 
     const inputHash = hashPassword(userInput.email, userInput.password);
-    if (inputHash != userRecord.password) {
+    if (inputHash != accountRecord.password) {
       throw AuthenticationErrors.wrongCredentials;
     }
 
     Logger.debug('AccountService | signIn | Password is valid!');
-    const user: IAccountDTO = AccountMapper.toDto(userRecord);
-    const token = this.generateToken(userRecord);
+    const account: IAccountDTO = AccountMapper.toDto(accountRecord);
+    const token = generateToken(accountRecord, this.tokenSecret);
 
     Logger.debug(`AccountService | signIn | Finished`);
-    return ServiceResponse.ok({ user, token });
+    return ServiceResponse.ok({ account, token });
+  }
+
+  public async deleteAccount(accountInfo: IAccountDTO): Promise<ServiceResponse<boolean>> {
+    Logger.debug('AccountService | deleteAccount | Start');
+    Logger.debug('AccountService | deleteAccount | Checking if account exists');
+    if (!(await this.userExists(accountInfo.email))) {
+      throw AuthenticationErrors.accountDoesNotExist;
+    }
+
+    Logger.debug('AccountService | deleteAccount | Deleting account');
+    const accountDeleted = await this.authenticationRepository.delete(accountInfo.email);
+    if (!accountDeleted) {
+      throw AuthenticationErrors.couldNotDeleteAccount;
+    }
+    Logger.debug('AccountService | deleteAccount | Deleted account');
+    Logger.debug('AccountService | deleteAccount | Finished');
+    return ServiceResponse.ok(accountDeleted);
+  }
+
+  public async getUser(userEmail: string): Promise<ServiceResponse<IAccountDTO>> {
+    Logger.debug(`AccountService | getUser | Started`);
+    const accountRecord = await this.authenticationRepository.findByEmail(userEmail);
+    if (!accountRecord) {
+      throw AuthenticationErrors.accountDoesNotExist;
+    }
+    const account: IAccountDTO = AccountMapper.toDto(accountRecord);
+    return ServiceResponse.ok(account);
   }
 
   private async userExists(userEmail: string) {
     const user = await this.authenticationRepository.findByEmail(userEmail);
     return !!user;
-  }
-
-  private generateToken(user: IAccount): string {
-    try {
-      Logger.debug(`AccountService | generateToken | Start | Sign JWT for userId: ${user.email}`);
-      const token = jwt.sign(
-        {
-          email: user.email,
-          role: user.role,
-        } as IJwtToken,
-        this.tokenSecret,
-        {
-          expiresIn: '1h',
-        }
-      );
-
-      Logger.debug(`AccountService | generateToken | End | Sign JWT for userId: ${user.email}`);
-      return token;
-    } catch (err: any) {
-      Logger.error(`AccountService | generateToken | Error: %s`, err.message);
-      throw err;
-    }
-  }
-
-  private decodeToken(token: string) {
-    try {
-      const decodedToken = jwt.verify(token, this.tokenSecret);
-      if (typeof decodedToken == 'string') throw Error();
-    } catch (err: any) {
-      Logger.error(`AccountService | generateToken | Error: %s`, err.message);
-      throw err;
-    }
   }
 }

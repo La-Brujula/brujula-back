@@ -18,7 +18,7 @@ export interface IAuthenticationRequestBody {
 }
 
 export interface IAuthenticationResponseBody {
-  user: IAccountDTO;
+  account: IAccountDTO;
   token: string;
 }
 
@@ -36,4 +36,5 @@ export interface IJwtToken {
   email: string;
   role: string;
   exp: number;
+  iat: number;
 }
