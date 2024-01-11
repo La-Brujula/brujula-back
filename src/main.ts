@@ -3,7 +3,6 @@ import * as os from 'os';
 import * as cluster from 'cluster';
 import App from './providers/App';
 import Logger from './providers/Logger';
-import * as types from '@shared/types';
 
 if (process.env.NODE_ENV === 'production' && cluster.default.isPrimary) {
   const cpus: any = os.cpus().length;
