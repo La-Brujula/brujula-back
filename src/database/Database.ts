@@ -1,8 +1,9 @@
 import config from '@/config';
 import Logger from '@/providers/Logger';
-import { DataTypes, Dialect, Model, ModelStatic, Sequelize } from 'sequelize';
+import { DataTypes, Dialect, ModelStatic, Sequelize } from 'sequelize';
 import { Service } from 'typedi';
 import { Account } from './schemas/Account';
+import { Umzug, SequelizeStorage } from 'umzug';
 
 @Service()
 class Database {
@@ -52,6 +53,12 @@ class Database {
   }
 
   async loadSchemas() {
+    const umzug = new Umzug({
+      migrations: { glob: 'migrations/*.js' },
+      context: this.sequelize.getQueryInterface(),
+      storage: new SequelizeStorage({ sequelize: this.sequelize }),
+      logger: Logger,
+    });
     const models = ['./schemas/Account'];
     models.map((route) => {
       const model = require(route).default(this.sequelize, DataTypes);
@@ -59,7 +66,12 @@ class Database {
       this.models[route.slice(route.lastIndexOf('/') + 1)] = model;
     });
 
-    this.sequelize.sync()
+    (async () => {
+      // Checks migrations and run them if they are not already applied. To keep
+      // track of the executed migrations, a table (and sequelize model) called SequelizeMeta
+      // will be automatically created (if it doesn't exist already) and parsed.
+      await umzug.up();
+    })();
   }
 
   public async shutdown() {
