@@ -34,9 +34,10 @@ export default (app: Router) => {
     }
   );
 
-  router
-    .route('/me')
-    .all(authenticateRequest)
-    .get(authController.me)
-    .delete(authController.deleteAccount);
+  router.use(authenticateRequest);
+
+  router.route('/me').get(authController.me).delete(authController.deleteAccount);
+
+  router.post('/me/password/reset', authController.sendPasswordReset);
+  router.patch('/me/password', authController.resetPassword);
 };

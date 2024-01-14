@@ -1,5 +1,9 @@
 import { Inject, Service } from 'typedi';
-import { IAccount, IAuthenticationRequestBody } from '@/models/authentication/authentication';
+import {
+  IAccount,
+  IAuthenticationRequestBody,
+  IUpdateAccount,
+} from '@/models/authentication/authentication';
 import Database from '@/database/Database';
 
 @Service('AccountRepository')
@@ -14,7 +18,12 @@ export class AccountRepository {
   }
 
   async create(userInput: IAuthenticationRequestBody): Promise<IAccount> {
-    const newUser = { email: userInput.email, password: userInput.password, role: 'user' };
+    const newUser = {
+      email: userInput.email,
+      password: userInput.password,
+      role: 'user',
+      passwordRecoveryAttempts: 0,
+    };
     return this.db.models.Account.create(newUser);
   }
 
@@ -24,5 +33,13 @@ export class AccountRepository {
         where: { email },
       })) == 1
     );
+  }
+
+  async update(email: string, values: IUpdateAccount) {
+    return await this.db.models.Account.update(values, {
+      where: {
+        email,
+      },
+    });
   }
 }

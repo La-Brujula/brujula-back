@@ -32,4 +32,13 @@ export default {
     storage: process.env.DB_STORAGE_LOCATION || 'db.sqlite',
     port: +(process.env.DB_PORT || 9117),
   },
+
+  smtp: {
+    host: process.env.SMTP_SERVER,
+    user: process.env.SMTP_USER,
+    password: process.env.SMTP_PASSWORD,
+    authType: process.env.SMTP_AUTH_TYPE,
+    sslPort: +(process.env.SMTP_SSL_PORT || 465),
+    tlsPort: +(process.env.SMTP_TLS_PORT || 587),
+  },
 };
