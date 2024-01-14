@@ -11,6 +11,7 @@ import { AccountMapper } from '@/models/authentication/authenticationMapper';
 import AuthenticationErrors from './AuthenticationErrors';
 import Logger from '@/providers/Logger';
 import { generateToken, hashPassword } from '@/shared/utils/jwtUtils';
+import { randomUUID } from 'crypto';
 
 @Service()
 export default class AuthenticationService {
@@ -96,16 +97,72 @@ export default class AuthenticationService {
 
   public async getUser(userEmail: string): Promise<ServiceResponse<IAccountDTO>> {
     Logger.debug(`AccountService | getUser | Started`);
+    Logger.debug('AccountService | getUser | Getting the user by email');
     const accountRecord = await this.authenticationRepository.findByEmail(userEmail);
     if (!accountRecord) {
       throw AuthenticationErrors.accountDoesNotExist;
     }
-    const account: IAccountDTO = AccountMapper.toDto(accountRecord);
+    Logger.debug('AccountService | getUser | Got a user');
+    const account = AccountMapper.toDto(accountRecord);
+    Logger.debug('AccountService | getUser | Finished');
     return ServiceResponse.ok(account);
+  }
+
+  public async createPasswordResetPin(email: string) {
+    Logger.debug('AccountService | createPasswordResetPin | Started');
+    Logger.debug('AccountService | createPasswordResetPin | Getting user');
+    const user = await this.authenticationRepository.findByEmail(email);
+
+    if (!user) throw AuthenticationErrors.accountDoesNotExist;
+
+    Logger.debug('AccountService | createPasswordResetPin | Checking a new pin can be created');
+    if (user.passwordRecoveryAttempts > 3) throw AuthenticationErrors.exceededPasswordResetAttempts;
+
+    Logger.debug('AccountService | createPasswordResetPin | Creating pin');
+    const pin = randomUUID();
+
+    Logger.debug('AccountService | createPasswordResetPin | Updating user');
+    await this.authenticationRepository.update(email, {
+      passwordResetPin: pin,
+      passwordResetPinExpirationTime: new Date(new Date().valueOf() + 15 * 60 * 1000),
+      passwordRecoveryAttempts: user.passwordRecoveryAttempts + 1,
+    });
+    Logger.debug('AccountService | createPasswordResetPin | Finished');
+    return ServiceResponse.ok(true);
   }
 
   private async userExists(userEmail: string) {
     const user = await this.authenticationRepository.findByEmail(userEmail);
     return !!user;
+  }
+
+  public async changePassword(pin: string, password: string, email: string) {
+    Logger.debug('AccountService | changePassword | Started');
+    const user = await this.authenticationRepository.findByEmail(email);
+    Logger.debug('AccountService | changePassword | Checking user exists');
+    if (user === null) {
+      throw AuthenticationErrors.accountDoesNotExist;
+    }
+    Logger.debug('AccountService | changePassword | Checking pins match');
+    if (pin != user.passwordResetPin) {
+      throw AuthenticationErrors.wrongPasswordResetToken;
+    }
+
+    Logger.debug("AccountService | changePassword | Checking pin isn't expired");
+    if (user.passwordResetPinExpirationTime! < new Date()) {
+      throw AuthenticationErrors.passwordResetTokenExpired;
+    }
+
+    Logger.debug('AccountService | changePassword | Updating user');
+    const [userUpdate] = await this.authenticationRepository.update(email, {
+      password: hashPassword(email, password),
+      passwordRecoveryAttempts: 0,
+      passwordResetPin: undefined,
+      passwordResetPinExpirationTime: undefined,
+    });
+
+    if (userUpdate == 0) throw AuthenticationErrors.couldNotChangePassword;
+    Logger.debug('AccountService | changePassword | Finished');
+    return ServiceResponse.ok(userUpdate);
   }
 }

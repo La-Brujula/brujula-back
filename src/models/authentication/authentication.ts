@@ -4,6 +4,14 @@ export interface IAccount {
   role: string;
   passwordResetPinExpirationTime?: Date;
   passwordResetPin?: string;
+  passwordRecoveryAttempts: number;
+}
+
+export interface IUpdateAccount {
+  password?: string;
+  role?: string;
+  passwordResetPinExpirationTime?: Date;
+  passwordResetPin?: string;
   passwordRecoveryAttempts?: number;
 }
 
@@ -27,7 +35,6 @@ export interface IResetPasswordRequestBody {
 }
 
 export interface IChangePasswordRequestBody {
-  email: string;
   password: string;
   resetPin: string;
 }

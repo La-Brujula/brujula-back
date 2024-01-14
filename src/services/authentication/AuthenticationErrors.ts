@@ -7,6 +7,10 @@ const AuthenticationErrors = {
   notLoggedIn: new ServiceError('AE04', 'Not logged in', 401),
   badToken: new ServiceError('AE05', 'Bad jwt token', 401),
   couldNotDeleteAccount: new ServiceError('AE06', 'Could not delete account', 500),
+  couldNotChangePassword: new ServiceError('AE07', 'Could not change password', 500),
+  exceededPasswordResetAttempts: new ServiceError('AE08', 'Too many password reset attempts', 403),
+  wrongPasswordResetToken: new ServiceError('AE09', 'Invalid password reset pin', 400),
+  passwordResetTokenExpired: new ServiceError('AE10', 'Password reset pin is expired', 400),
 };
 
 export default AuthenticationErrors;
