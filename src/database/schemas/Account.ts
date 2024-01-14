@@ -1,6 +1,6 @@
 import { InferAttributes, InferCreationAttributes, ModelOptions, Sequelize } from 'sequelize';
 import { TimestampModel } from './base';
-import { IAccount } from '@/models/authentication/authentication';
+import { IAccount, IAccountDTO } from '@/models/authentication/authentication';
 
 const USER_ROLES: readonly any[] = ['user', 'editor', 'manager', 'admin'];
 
@@ -11,9 +11,9 @@ export class Account
   declare email: string;
   declare password: string;
   declare role: string;
+  declare passwordRecoveryAttempts: number;
   declare passwordResetPinExpirationTime?: Date;
   declare passwordResetPin?: string;
-  declare passwordRecoveryAttempts?: number;
 }
 
 const columns = (DataTypes: any) => ({
@@ -45,7 +45,7 @@ const columns = (DataTypes: any) => ({
     allowNull: true,
   },
 
-  passwordPin: {
+  passwordResetPin: {
     type: DataTypes.STRING,
     allowNull: true,
   },
