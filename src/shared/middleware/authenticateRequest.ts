@@ -14,7 +14,7 @@ const authenticateRequest = handleAsync((req: Request, res: Response, next: Next
   if (prefix != 'Bearer' || !token) throw AuthenticationErrors.badToken;
 
   // Get user from token
-  const decodedToken = decodeToken(token, config.application.jwt_secret);
+  const decodedToken = decodeToken(token, config.application.jwtSecret);
 
   // Attach the user to the request
   req.user = { email: decodedToken.email, role: decodedToken.role };

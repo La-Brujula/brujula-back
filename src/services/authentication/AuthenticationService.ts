@@ -18,9 +18,8 @@ export default class AuthenticationService {
   declare tokenSecret: string;
   constructor(
     @Inject('AccountRepository') private readonly authenticationRepository: AccountRepository
-    // @Inject('SendGridService') private readonly sendGridService: SendGridService
   ) {
-    this.tokenSecret = config.application.jwt_secret;
+    this.tokenSecret = config.application.jwtSecret;
 
     if (!this.tokenSecret || this.tokenSecret.length == 0) {
       throw new Error('AccountService | generateToken | JWT | was not provided in configuration');
