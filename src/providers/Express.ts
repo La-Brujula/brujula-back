@@ -34,6 +34,15 @@ class Express {
     this.express.use(
       fileUpload({
         createParentPath: true,
+        limits: {
+          fileSize: 10 * 1024 * 1024,
+          files: 1,
+        },
+        useTempFiles: true,
+        tempFileDir: '/tmp/',
+        safeFileNames: true,
+        preserveExtension: 4,
+        abortOnLimit: true,
       })
     );
   }

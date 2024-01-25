@@ -1,6 +1,7 @@
 import { Application, Router } from 'express';
 import config from '@/config';
 import authenticationRoutes from '@/api/authentication/authentication.routes';
+import imageTestRoutes from '@/api/images/imageTest.routes';
 
 class Routes {
   public setApiRoutes(_express: Application): void {
@@ -11,6 +12,7 @@ class Routes {
     _express.use(prefix, app);
 
     authenticationRoutes(app);
+    imageTestRoutes(app);
   }
 }
 

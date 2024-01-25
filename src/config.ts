@@ -20,7 +20,13 @@ export default {
   application: {
     name: process.env.APP_NAME,
     port: +(process.env.APP_PORT || 8000),
-    jwt_secret: process.env.JWT_SECRET || 'supersecret',
+    jwtSecret: process.env.JWT_SECRET || 'supersecret',
+  },
+
+  images: {
+    imagesPath: process.env.IMAGES_PATH || './public',
+    imagesBaseURL:
+      process.env.IMAGES_BASE_URL || 'https://img.labrujula.com.mx',
   },
 
   database: {

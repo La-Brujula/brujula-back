@@ -20,18 +20,14 @@ export default (app: Router) => {
     '/signup',
     bodyMatchesIAuthenticationRequest(),
     handleValidationErrors,
-    async (req: Request, res: Response, next: NextFunction) => {
-      await authController.signUp(req, res, next);
-    }
+    authController.signUp
   );
 
   router.post(
     '/login',
     bodyMatchesIAuthenticationRequest(),
     handleValidationErrors,
-    async (req: Request, res: Response, next: NextFunction) => {
-      await authController.logIn(req, res, next);
-    }
+    authController.logIn
   );
 
   router.use(authenticateRequest);

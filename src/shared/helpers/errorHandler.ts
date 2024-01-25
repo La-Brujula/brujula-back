@@ -16,7 +16,7 @@ export class ErrorHandler extends Error {
   }
 }
 
-export const handleError = (err: ErrorHandler, req: Request, res: Response, _: NextFunction) => {
+export const handleError = (err: ErrorHandler, _: Request, res: Response) => {
   const { statusCode, message } = err;
   res.status(statusCode).json({ error: message });
 };
