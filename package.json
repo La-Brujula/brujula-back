@@ -4,6 +4,9 @@
   "version": "0.0.1",
   "main": "main.ts",
   "license": "MIT",
+  "engines": {
+    "node": "16.17.0"
+  },
   "scripts": {
     "start": "node dist/main.js",
     "build": "tsc --project tsconfig.json && tsc-alias -p tsconfig.json",
