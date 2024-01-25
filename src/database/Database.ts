@@ -49,6 +49,7 @@ class Database {
       Logger.info('Database: Connected to database correctly');
     } catch (error) {
       Logger.error(error);
+      throw error;
     }
   }
 
