@@ -6,16 +6,13 @@ export function handleAsync(asyncFunction: RequestHandler) {
     try {
       return await asyncFunction(req, res, next);
     } catch (error: any) {
-      let logType;
       if (!!error.errorCode) {
-        logType = 'warn';
-        res.status(error.httpCode).json(error.toJson());
+        Logger.log('warn', error);
+        return res.status(error.httpCode).json(error.toJson());
       } else {
-        logType = 'error';
-        res.status(500).json(error);
+        Logger.log('error', error);
+        return res.status(500).json(error);
       }
-      Logger.log(logType || 'error', error);
-      return;
     }
   };
 }

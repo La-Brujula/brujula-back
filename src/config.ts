@@ -7,6 +7,7 @@ if (process.env.NODE_ENV !== 'production' && envConfig.error) {
 }
 
 export default {
+  env: process.env.NODE_ENV || 'development',
   // Logs
   logs: {
     level: process.env.LOG_LEVEL || 'silly',
@@ -25,8 +26,7 @@ export default {
 
   images: {
     imagesPath: process.env.IMAGES_PATH || './public',
-    imagesBaseURL:
-      process.env.IMAGES_BASE_URL || 'https://img.labrujula.com.mx',
+    imagesBaseURL: process.env.IMAGES_BASE_URL || 'https://img.labrujula.com.mx',
   },
 
   database: {

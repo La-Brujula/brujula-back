@@ -9,6 +9,7 @@ export class AccountMapper implements IMapper<IAccount> {
     return {
       email: account.email,
       role: account.role,
+      ProfileId: account.ProfileId
     };
   }
 }

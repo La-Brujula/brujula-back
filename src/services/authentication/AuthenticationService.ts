@@ -42,6 +42,7 @@ export default class AuthenticationService {
     const accountRecord = await this.authenticationRepository.create({
       email: newAccount.email,
       password: hashedPassword,
+      type: newAccount.type,
     });
     Logger.debug('AccountService | addAccount | Created account');
 
@@ -91,7 +92,7 @@ export default class AuthenticationService {
     }
     Logger.debug('AccountService | deleteAccount | Deleted account');
     Logger.debug('AccountService | deleteAccount | Finished');
-    return ServiceResponse.ok(accountDeleted);
+    return new ServiceResponse(accountDeleted, 202);
   }
 
   public async getUser(userEmail: string): Promise<ServiceResponse<IAccountDTO>> {

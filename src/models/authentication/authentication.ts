@@ -5,6 +5,7 @@ export interface IAccount {
   passwordResetPinExpirationTime?: Date;
   passwordResetPin?: string;
   passwordRecoveryAttempts: number;
+  ProfileId: string;
 }
 
 export interface IUpdateAccount {
@@ -18,11 +19,13 @@ export interface IUpdateAccount {
 export interface IAccountDTO {
   email: string;
   role: string;
+  ProfileId: string;
 }
 
 export interface IAuthenticationRequestBody {
   email: string;
   password: string;
+  type?: 'moral' | 'fisica';
 }
 
 export interface IAuthenticationResponseBody {
@@ -42,6 +45,7 @@ export interface IChangePasswordRequestBody {
 export interface IJwtToken {
   email: string;
   role: string;
+  ProfileId: string;
   exp: number;
   iat: number;
 }

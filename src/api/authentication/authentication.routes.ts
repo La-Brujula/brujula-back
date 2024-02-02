@@ -1,4 +1,4 @@
-import { NextFunction, Response, Router, Request } from 'express';
+import { Router } from 'express';
 import AuthenticationController from './authentication.controllers';
 import Container from 'typedi';
 import { body } from 'express-validator';
@@ -19,6 +19,7 @@ export default (app: Router) => {
   router.post(
     '/signup',
     bodyMatchesIAuthenticationRequest(),
+    body('type').isIn(['fisica', 'moral']),
     handleValidationErrors,
     authController.signUp
   );

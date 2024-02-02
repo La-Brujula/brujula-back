@@ -11,6 +11,7 @@ export function generateToken(user: IAccount, tokenSecret: string): string {
     {
       email: user.email,
       role: user.role,
+      ProfileId: user.ProfileId,
     } as IJwtToken,
     tokenSecret,
     {
@@ -20,7 +21,7 @@ export function generateToken(user: IAccount, tokenSecret: string): string {
   return token;
 }
 
-export function decodeToken(token: string, tokenSecret: string) {
+export async function decodeToken(token: string, tokenSecret: string) {
   const decodedToken = jwt.verify(token, tokenSecret);
   if (typeof decodedToken == 'string') throw Error();
 

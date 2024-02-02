@@ -32,9 +32,6 @@ export default class AuthenticationController {
     const userInput: IAuthenticationRequestBody = req.body;
     const accountsSignUpResponse: ServiceResponse<IAuthenticationResponseBody> =
       await this.authService.addAccount(userInput);
-    if (!accountsSignUpResponse.isSuccess) {
-      sendResponse(res, accountsSignUpResponse);
-    }
     Logger.debug('AuthenticationController | SignUp | End');
     return sendResponse(res, accountsSignUpResponse);
   });
@@ -43,9 +40,6 @@ export default class AuthenticationController {
     Logger.debug('AuthenticationController | DeleteAccount | Start');
     const accountsDeleteAccountResponse: ServiceResponse<boolean> =
       await this.authService.deleteAccount(req.user);
-    if (!accountsDeleteAccountResponse.isSuccess) {
-      sendResponse(res, accountsDeleteAccountResponse);
-    }
     Logger.debug('AuthenticationController | DeleteAccount | End');
     return sendResponse(res, accountsDeleteAccountResponse);
   });
@@ -80,9 +74,6 @@ export default class AuthenticationController {
     const accountMeResponse: ServiceResponse<IAccountDTO> = await this.authService.getUser(
       req.user.email
     );
-    if (!accountMeResponse.isSuccess) {
-      sendResponse(res, accountMeResponse);
-    }
     Logger.debug('AuthenticationController | Me | End');
     return sendResponse(res, accountMeResponse);
   });

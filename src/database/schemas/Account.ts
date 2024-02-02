@@ -1,71 +1,53 @@
-import { InferAttributes, InferCreationAttributes, ModelOptions, Sequelize } from 'sequelize';
-import { TimestampModel } from './base';
-import { IAccount, IAccountDTO } from '@/models/authentication/authentication';
+import { IAccount } from '@/models/authentication/authentication';
+import Profile from './Profile';
+import {
+  BelongsTo,
+  Column,
+  CreatedAt,
+  DeletedAt,
+  ForeignKey,
+  IsEmail,
+  IsInt,
+  Model,
+  PrimaryKey,
+  Table,
+  UpdatedAt,
+} from 'sequelize-typescript';
 
-const USER_ROLES: readonly any[] = ['user', 'editor', 'manager', 'admin'];
+type AccountRole = 'user' | 'editor' | 'manager' | 'admin';
 
-export class Account
-  extends TimestampModel<InferAttributes<Account>, InferCreationAttributes<Account>>
-  implements IAccount
-{
-  declare email: string;
-  declare password: string;
-  declare role: string;
-  declare passwordRecoveryAttempts: number;
-  declare passwordResetPinExpirationTime?: Date;
-  declare passwordResetPin?: string;
-}
+@Table({ tableName: 'accounts', modelName: 'Account' })
+export default class Account extends Model implements IAccount {
+  @IsEmail
+  @PrimaryKey
+  @Column
+  email!: string;
 
-const columns = (DataTypes: any) => ({
-  email: {
-    type: DataTypes.STRING,
-    validate: {
-      isEmail: true,
-    },
-    allowNull: false,
-    unique: true,
-  },
+  @Column password!: string;
 
-  password: {
-    type: DataTypes.STRING,
-    allowNull: false,
-  },
+  @Column role!: AccountRole;
 
-  role: {
-    type: DataTypes.STRING,
-    defaultValue: 'user',
-    allowNull: true,
-    validate: {
-      isIn: USER_ROLES,
-    },
-  },
+  @IsInt
+  @Column
+  passwordRecoveryAttempts!: number;
 
-  passwordResetPinExpirationTime: {
-    type: DataTypes.DATE,
-    allowNull: true,
-  },
+  @Column passwordResetPinExpirationTime?: Date;
 
-  passwordResetPin: {
-    type: DataTypes.STRING,
-    allowNull: true,
-  },
+  @Column passwordResetPin?: string;
 
-  passwordRecoveryAttempts: {
-    type: DataTypes.INTEGER,
-    allowNull: true,
-    defaultValue: 0,
-  },
+  @ForeignKey(() => Profile)
+  @Column
+  ProfileId!: string;
 
-  updatedAt: DataTypes.DATE,
-  createdAt: DataTypes.DATE,
-  deletedAt: DataTypes.DATE,
-});
+  @BelongsTo(() => Profile)
+  profile!: Profile;
 
-const options: ModelOptions = {
-  timestamps: true,
-  tableName: 'accounts',
-};
+  @CreatedAt
+  createdAt!: Date;
 
-export default function createAccount(sequelize: Sequelize, DataTypes: any) {
-  return sequelize.define('Account', columns(DataTypes), options);
+  @UpdatedAt
+  updatedAt!: Date;
+
+  @DeletedAt
+  deletedAt!: Date;
 }
