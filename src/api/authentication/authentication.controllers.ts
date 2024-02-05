@@ -45,25 +45,18 @@ export default class AuthenticationController {
   });
 
   public sendPasswordReset = handleAsync(async (req: Request, res: Response) => {
-    const accountsPasswordResetResponse = await this.authService.createPasswordResetPin(
-      req.user.email
-    );
+    const { email } = req.body;
+    const accountsPasswordResetResponse = await this.authService.createPasswordResetPin(email);
 
-    await sendEmail(req.user.email, 'Reinicia tu contraseña', {
-      template: 'passwordReset',
-      context: {
-        passwordResetToken: accountsPasswordResetResponse.getValue(),
-      },
-    });
     return sendResponse(res, accountsPasswordResetResponse);
   });
 
   public resetPassword = handleAsync(async (req: Request, res: Response) => {
-    const { password, code } = req.body;
+    const { email, password, code } = req.body;
     const accountsPasswordResetResponse = await this.authService.changePassword(
       code,
       password,
-      req.user.email
+      email
     );
 
     return sendResponse(res, accountsPasswordResetResponse);

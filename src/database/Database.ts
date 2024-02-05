@@ -53,7 +53,7 @@ class Database {
     }
 
     if (config.env === 'development') {
-      await this.sequelize.sync({ force: true });
+      await this.sequelize.sync();
     } else {
       const umzug = new Umzug({
         migrations: { glob: 'migrations/*.js' },

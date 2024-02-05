@@ -11,7 +11,8 @@ import { AccountMapper } from '@/models/authentication/authenticationMapper';
 import AuthenticationErrors from './AuthenticationErrors';
 import Logger from '@/providers/Logger';
 import { generateToken, hashPassword } from '@/shared/utils/jwtUtils';
-import { randomUUID } from 'crypto';
+import { randomBytes } from 'crypto';
+import { sendEmail } from '@/providers/Emailer';
 
 @Service()
 export default class AuthenticationService {
@@ -116,10 +117,11 @@ export default class AuthenticationService {
     if (!user) throw AuthenticationErrors.accountDoesNotExist;
 
     Logger.debug('AccountService | createPasswordResetPin | Checking a new pin can be created');
-    if (user.passwordRecoveryAttempts > 3) throw AuthenticationErrors.exceededPasswordResetAttempts;
+    if (user.passwordRecoveryAttempts == 3)
+      throw AuthenticationErrors.exceededPasswordResetAttempts;
 
     Logger.debug('AccountService | createPasswordResetPin | Creating pin');
-    const pin = randomUUID();
+    const pin = randomBytes(32).toString('hex');
 
     Logger.debug('AccountService | createPasswordResetPin | Updating user');
     await this.authenticationRepository.update(email, {
@@ -127,8 +129,15 @@ export default class AuthenticationService {
       passwordResetPinExpirationTime: new Date(new Date().valueOf() + 15 * 60 * 1000),
       passwordRecoveryAttempts: user.passwordRecoveryAttempts + 1,
     });
+
+    await sendEmail(email, 'Reinicia tu contraseña', {
+      template: 'passwordReset',
+      context: {
+        passwordResetToken: pin,
+      },
+    });
     Logger.debug('AccountService | createPasswordResetPin | Finished');
-    return ServiceResponse.ok(true);
+    return new ServiceResponse(true, 201);
   }
 
   private async userExists(userEmail: string) {
@@ -142,6 +151,9 @@ export default class AuthenticationService {
     Logger.debug('AccountService | changePassword | Checking user exists');
     if (user === null) {
       throw AuthenticationErrors.accountDoesNotExist;
+    }
+    if (user.passwordResetPin === null) {
+      throw AuthenticationErrors.wrongPasswordResetToken;
     }
     Logger.debug('AccountService | changePassword | Checking pins match');
     if (pin != user.passwordResetPin) {
@@ -157,8 +169,8 @@ export default class AuthenticationService {
     const [userUpdate] = await this.authenticationRepository.update(email, {
       password: hashPassword(email, password),
       passwordRecoveryAttempts: 0,
-      passwordResetPin: undefined,
-      passwordResetPinExpirationTime: undefined,
+      passwordResetPin: null,
+      passwordResetPinExpirationTime: null,
     });
 
     if (userUpdate == 0) throw AuthenticationErrors.couldNotChangePassword;

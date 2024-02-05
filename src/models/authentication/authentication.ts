@@ -11,8 +11,8 @@ export interface IAccount {
 export interface IUpdateAccount {
   password?: string;
   role?: string;
-  passwordResetPinExpirationTime?: Date;
-  passwordResetPin?: string;
+  passwordResetPinExpirationTime?: Date | null;
+  passwordResetPin?: string | null;
   passwordRecoveryAttempts?: number;
 }
 
