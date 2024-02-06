@@ -4,6 +4,7 @@ export interface IBasicProfile {
   id: string;
   primaryEmail: string;
   type: 'moral' | 'fisica';
+  fullName?: string;
   searchable: boolean;
   subscriber: boolean;
   recommendationsCount: number;
@@ -12,7 +13,6 @@ export interface IBasicProfile {
 export interface ISearchableProfile {
   firstName?: string;
   lastName?: string;
-  fullName?: string;
   nickName?: string;
   secondaryEmails?: string[];
   primaryActivity?: string;
@@ -81,6 +81,7 @@ export interface IProfileCreationQuery {
 }
 
 export interface IProfileSearchQuery {
+  query?: string;
   name?: string;
   activity?: string;
   location?: string;

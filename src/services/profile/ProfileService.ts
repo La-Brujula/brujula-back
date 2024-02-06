@@ -19,6 +19,14 @@ export default class ProfileService {
   declare tokenSecret: string;
   constructor(@Inject('ProfileRepository') private readonly profileRepository: ProfileRepository) {}
 
+  async getProfileOrThrow(profileId: string) {
+    const profile = await this.profileRepository.findById(profileId);
+    if (profile === null) {
+      throw ProfileErrors.profileDoesNotExist;
+    }
+    return profile;
+  }
+
   public async createProfile(
     newAccount: IProfileCreationQuery
   ): Promise<ServiceResponse<IProfileDTO>> {
@@ -49,12 +57,51 @@ export default class ProfileService {
     return ServiceResponse.paginate(profiles, total_profiles, parameters.offset);
   }
 
-  public async getFullProfile(id: string): Promise<ServiceResponse<boolean>> {
+  public async recommend(
+    recommendedById: string,
+    recommendationId: string
+  ): Promise<ServiceResponse<IProfileDTO>> {
     Logger.debug('ProfileService | GetFullProfile | Started');
-    const profile = await this.profileRepository.findById(id);
-    if (profile === null) {
+    const recommendedProfile = await this.getProfileOrThrow(recommendationId);
+    const recommendatorProfile = await this.getProfileOrThrow(recommendedById);
+
+    if (await recommendedProfile.$has('recommendations', recommendatorProfile)) {
+      throw ProfileErrors.alreadyRecommended;
+    }
+    await recommendedProfile.$add('recommendations', recommendatorProfile);
+    Logger.debug('ProfileService | GetFullProfile | Finished');
+    await recommendedProfile.save();
+    return ServiceResponse.ok(recommendedProfile, 201);
+  }
+
+  public async revokeRecommendation(
+    recommendedById: string,
+    recommendationId: string
+  ): Promise<ServiceResponse<IProfileDTO>> {
+    Logger.debug('ProfileService | GetFullProfile | Started');
+    const recommendedProfile = await this.getProfileOrThrow(recommendationId);
+    const recommendatorProfile = await this.getProfileOrThrow(recommendedById);
+    if (!(await recommendedProfile.$has('recommendations', recommendatorProfile))) {
+      throw ProfileErrors.notRecommended;
+    }
+
+    recommendedProfile.$remove('recommendations', recommendatorProfile);
+    await recommendedProfile.save();
+    Logger.debug('ProfileService | GetFullProfile | Finished');
+    return ServiceResponse.ok(recommendedProfile);
+  }
+
+  public async getFullProfile(id: string): Promise<ServiceResponse<IProfileDTO>> {
+    Logger.debug('ProfileService | GetFullProfile | Started');
+
+    const profileDb = await this.profileRepository.findById(id);
+    if (profileDb === null) {
       throw ProfileErrors.profileDoesNotExist;
     }
+
+    console.log(await profileDb.$count('recommendations'));
+
+    const profile = ProfileMapper.toProfile(profileDb);
     Logger.debug('ProfileService | GetFullProfile | Finished');
     return ServiceResponse.ok(profile);
   }

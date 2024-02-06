@@ -1,7 +1,6 @@
-import { NextFunction, Response, Router, Request } from 'express';
+import { Router } from 'express';
 import ProfileController from './profile.controllers';
 import Container from 'typedi';
-import { body, query } from 'express-validator';
 import handleValidationErrors from '@/shared/utils/handleValidationErrors';
 import authenticateRequest from '@/shared/middleware/authenticateRequest';
 import {
@@ -10,6 +9,12 @@ import {
   validateProfileCreation,
   validateProfileUpdate,
 } from './profile.validators';
+import { handleAsync } from '@/shared/utils/sendError';
+
+const notSelf = handleAsync((req, _, next) => {
+  if (req.user.ProfileId == req.params.profileId) throw Error("Can't affect self");
+  return next();
+});
 
 const router: Router = Router();
 export default (app: Router) => {
@@ -26,10 +31,17 @@ export default (app: Router) => {
   );
   router.post('/', validateProfileCreation, handleValidationErrors, profileController.create);
 
-  router.use(authenticateRequest);
-
   router
     .route('/me')
-    .get(profileController.me)
+    .all(authenticateRequest)
+    .get(profileController.getUserProfile)
     .patch(validateProfileUpdate, handleValidationErrors, profileController.updateMe);
+
+  router
+    .route('/:profileId/recommendations')
+    .all(authenticateRequest, notSelf)
+    .post(profileController.recommendProfile)
+    .delete(profileController.revokeRecommendation);
+
+  router.get('/:profileId', profileController.attachParamToUser, profileController.getUserProfile);
 };

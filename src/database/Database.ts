@@ -12,8 +12,6 @@ class Database {
   private static _instance: Database;
   public sequelize!: Sequelize;
 
-  public constructor() {}
-
   public static async getInstance(): Promise<Database> {
     if (this._instance) {
       return this._instance;

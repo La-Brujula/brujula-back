@@ -9,7 +9,7 @@ type Meta = {
 export class ServiceResponse<T> {
   public readonly isSuccess: boolean;
   public readonly error: ServiceError | undefined;
-  public readonly errorCode: string;
+  public readonly errorCode?: string;
   public readonly httpStatus: number;
   private readonly entity: T | T[] | undefined;
   private readonly meta?: Meta;
@@ -38,7 +38,7 @@ export class ServiceResponse<T> {
       this.error = new ServiceError(errorCode, errorMessage);
     }
     this.entity = entity;
-    this.errorCode = !errorCode || errorCode == '' ? 'E00' : errorCode;
+    this.errorCode = errorCode;
 
     if (totalItems !== undefined && limit !== undefined && offset !== undefined) {
       this.meta = {
@@ -51,11 +51,11 @@ export class ServiceResponse<T> {
     Object.freeze(this);
   }
 
-  public static ok<U>(value: any): ServiceResponse<U> {
-    if (typeof value['toDTO'] === 'function') {
+  public static ok<U>(value: any, status: number = 200): ServiceResponse<U> {
+    if (typeof value.toDTO === 'function') {
       value = value.toDTO();
     }
-    return new ServiceResponse<U>(true, 200, undefined, value, 'OK');
+    return new ServiceResponse<U>(true, status, undefined, value, undefined);
   }
 
   public static paginate<U>(items: U[], totalItems: number, offset: number): ServiceResponse<U[]> {
@@ -63,11 +63,11 @@ export class ServiceResponse<T> {
       true,
       200,
       undefined,
-      items,
+      items || [],
       'OK',
-      totalItems,
-      items.length,
-      offset
+      totalItems || 0,
+      items.length || 0,
+      offset || 0
     );
   }
 

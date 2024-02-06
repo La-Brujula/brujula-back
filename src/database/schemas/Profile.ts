@@ -1,5 +1,6 @@
 import { IProfile } from '@/models/profile/profile';
 import {
+  AfterUpdate,
   BeforeUpdate,
   BelongsToMany,
   Column,
@@ -18,6 +19,7 @@ import {
   UpdatedAt,
 } from 'sequelize-typescript';
 import { DataTypes, UUIDV4 } from 'sequelize';
+import { ProfileMapper } from '@/models/profile/profileMapper';
 
 const ACTIVITY_REGEX = /\d{3}-\d{2}/;
 
@@ -69,17 +71,26 @@ export default class Profile extends Model implements IProfile {
   @Column
   primaryActivity?: string;
 
-  @Is('Activity')
+  @Is('Activity', (v) => ACTIVITY_REGEX.test(v))
   @Column
   secondaryActivity?: string;
 
-  @Is('Activity')
+  @Is('Activity', (v) => ACTIVITY_REGEX.test(v))
   @Column
   thirdActivity?: string;
 
   @Column(DataTypes.ARRAY(DataTypes.STRING)) secondaryEmails?: string[];
   @Column(DataTypes.ARRAY(DataTypes.STRING)) phoneNumbers?: string[];
-  @Column(DataTypes.ARRAY(DataTypes.STRING)) languages?: string[];
+  @Column({
+    type: DataTypes.ARRAY(DataTypes.STRING),
+    get() {
+      return this.dataValues.languages?.map((v: string) => {
+        const [lang, proficiency] = v.split(':');
+        return { lang, proficiency };
+      });
+    },
+  })
+  languages?: string[];
   @Column(DataTypes.ARRAY(DataTypes.STRING)) externalLinks?: string[];
 
   @Column whatsapp?: string;
@@ -91,12 +102,28 @@ export default class Profile extends Model implements IProfile {
   @Column linkedin?: string;
   @Column twitter?: string;
   @Column tiktok?: string;
+  @Column headline?: string;
+
   @Column state?: string;
   @Column city?: string;
   @Column country?: string;
   @Column postalCode?: string;
-  @Column headline?: string;
-  @Column location?: string;
+
+  @Column({
+    type: DataTypes.VIRTUAL,
+    get() {
+      return [
+        this.dataValues.city,
+        this.dataValues.state,
+        this.dataValues.country,
+        !!this.dataValues.postalCode && 'CP: ' + this.dataValues.postalCode,
+      ]
+        .filter((v) => !!v)
+        .join(', ');
+    },
+  })
+  location?: string;
+
   @Column university?: string;
   @Column associations?: string;
   @Column certifications?: string;
@@ -128,31 +155,40 @@ export default class Profile extends Model implements IProfile {
   @DeletedAt
   deletedAt!: Date;
 
-  @BeforeUpdate
-  static updateVector(instance: Profile) {
+  @AfterUpdate
+  static updateRecommendationsCount(instance: Profile) {
+    console.log(instance.$count('recommendations'));
+  }
+
+  @BeforeUpdate({ name: 'updateVector' })
+  static async updateVector(instance: Profile) {
     function addWeightIfExists(v: string | undefined, weight: 'A' | 'B' | 'C'): string[] {
       if (v === undefined) return [];
       return v.split(' ').map((i) => i + ':' + weight);
     }
-    instance.setDataValue('recommendationsCount', instance.$count('recommendations'));
-    instance.setDataValue(
-      'searchString',
-      instance.sequelize.fn(
-        'to_tsvector',
-        [
-          instance.dataValues.fullName?.split(' ').map((v: string) => v + ':A'),
-          addWeightIfExists(instance.dataValues.primaryActivity, 'A'),
-          addWeightIfExists(instance.dataValues.secondaryActivity, 'B'),
-          addWeightIfExists(instance.dataValues.thirdActivity, 'B'),
-          addWeightIfExists(instance.dataValues.location, 'B'),
-          addWeightIfExists(instance.dataValues.certifications, 'C'),
-          addWeightIfExists(instance.dataValues.associations, 'C'),
-          addWeightIfExists(instance.dataValues.university, 'C'),
-        ]
-          .flat()
-          .join(' ')
-      )
-    );
+    instance.recommendationsCount = await instance.$count('recommendations');
+    instance.searchable =
+      !!instance.primaryActivity && !!instance.fullName && !!instance.gender && !!instance.location;
+    instance.searchString = instance.sequelize.fn(
+      'to_tsvector',
+      [
+        'spanish',
+        instance.dataValues.fullName?.split(' ').map((v: string) => v + ':A'),
+        addWeightIfExists(instance.dataValues.primaryActivity, 'A'),
+        addWeightIfExists(instance.dataValues.secondaryActivity, 'B'),
+        addWeightIfExists(instance.dataValues.thirdActivity, 'B'),
+        addWeightIfExists(instance.dataValues.location, 'B'),
+        addWeightIfExists(instance.dataValues.certifications, 'C'),
+        addWeightIfExists(instance.dataValues.associations, 'C'),
+        addWeightIfExists(instance.dataValues.university, 'C'),
+      ]
+        .flat()
+        .join(' ')
+    ) as unknown as string;
+  }
+
+  toDTO() {
+    return ProfileMapper.toDto(this);
   }
 }
 

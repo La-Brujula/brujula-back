@@ -1,17 +1,14 @@
 import {
   IExtraProfileInformation,
   IProfileCreationQuery,
-  IProfileDTO,
   IProfileSearchQuery,
   ISearchableProfile,
 } from '@/models/profile/profile';
-import Logger from '@/providers/Logger';
 import ProfileService from '@/services/profile/ProfileService';
 import { IPaginationParams } from '@/shared/classes/pagination';
-import { ServiceResponse } from '@/shared/classes/serviceResponse';
 import { handleAsync } from '@/shared/utils/sendError';
 import { sendResponse } from '@/shared/utils/sendResponse';
-import { Request, Response } from 'express';
+import { NextFunction, Request, Response } from 'express';
 import { Inject, Service } from 'typedi';
 
 @Service()
@@ -20,7 +17,7 @@ export default class ProfileController {
 
   public search = handleAsync(async (req: Request, res: Response) => {
     const query: IProfileSearchQuery & IPaginationParams = req.body;
-    const searchResults: ServiceResponse<IProfileDTO[]> = await this.profileService.search(query);
+    const searchResults = await this.profileService.search(query);
     return sendResponse(res, searchResults);
   });
 
@@ -40,8 +37,33 @@ export default class ProfileController {
     return sendResponse(res, accountsSignUpResponse);
   });
 
-  public me = handleAsync(async (req: Request, res: Response) => {
+  public getUserProfile = handleAsync(async (req: Request, res: Response) => {
     const profileMeResponse = await this.profileService.getFullProfile(req.user.ProfileId);
     return sendResponse(res, profileMeResponse);
   });
+
+  public recommendProfile = handleAsync(async (req: Request, res: Response) => {
+    const profileMeResponse = await this.profileService.recommend(
+      req.user.ProfileId,
+      req.params.profileId
+    );
+    return sendResponse(res, profileMeResponse);
+  });
+
+  public revokeRecommendation = handleAsync(async (req: Request, res: Response) => {
+    const profileMeResponse = await this.profileService.revokeRecommendation(
+      req.user.ProfileId,
+      req.params.profileId
+    );
+    return sendResponse(res, profileMeResponse);
+  });
+
+  public attachParamToUser = async (req: Request, _: Response, next: NextFunction) => {
+    if (!req.user) {
+      req.user = { email: '', role: 'user', ProfileId: req.params.profileId };
+      return next();
+    }
+    req.user.ProfileId = req.params.ProfileId;
+    next();
+  };
 }

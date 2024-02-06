@@ -1,3 +1,4 @@
+import Logger from '@/providers/Logger';
 import { body, query } from 'express-validator';
 import isISO6391 from 'validator/lib/isISO6391';
 
@@ -52,29 +53,17 @@ export const validateProfileUpdate = [
   body('languages')
     .optional()
     .isArray()
-    .custom((userInput) => {
-      userInput.forEach(
-        (v: {
-          language: string;
-          proficiency: 'basic' | 'intermediate' | 'advanced' | 'native';
-        }) => {
-          if (!isISO6391(v.language)) {
-            throw Error(`Invalid language code ${v.language}. Use ISO639-1`);
-          }
-          if (!['basic', 'intermediate', 'advanced', 'native'].includes(v.proficiency)) {
-            throw Error(
-              'Unsupported proficiency, please use one of: "basic", "intermediate", "advanced", "native"'
-            );
-          }
-        }
-      );
-    })
     .customSanitizer((userInput) => {
       return userInput.map(
-        (v: { language: string; proficiency: 'basic' | 'intermediate' | 'advanced' | 'native' }) =>
-          `${v.language}:${v.proficiency}`
+        (v: { lang: string; proficiency: 'basic' | 'intermediate' | 'advanced' | 'native' }) =>
+          `${v.lang}:${v.proficiency}`
       );
     }),
+  body('languages.*.lang').optional().isString().isISO6391(),
+  body('languages.*.proficiency')
+    .optional()
+    .isString()
+    .isIn(['basic', 'intermediate', 'advanced', 'native']),
   body('gender').optional().isString().isIn(['male', 'female', 'other']),
   body('state').optional().isString().isLength({ min: 1, max: 128 }),
   body('city').optional().isString().isLength({ min: 1, max: 64 }),

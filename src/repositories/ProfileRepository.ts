@@ -12,6 +12,7 @@ import { Op, Order, Sequelize, WhereOptions } from 'sequelize';
 import Profile from '@/database/schemas/Profile';
 import { IPaginationParams } from '@/shared/classes/pagination';
 import { Repository } from 'sequelize-typescript';
+import ProfileErrors from '@/services/profile/ProfileErrors';
 
 @Service('ProfileRepository')
 export class ProfileRepository {
@@ -20,12 +21,29 @@ export class ProfileRepository {
     this.db = database.sequelize.getRepository(Profile);
   }
 
-  async findById(id: string): Promise<IProfile | null> {
-    return this.db.findByPk(id, { rejectOnEmpty: true });
+  async findById(id: string) {
+    return await this.db.findByPk(id, {
+      include: [
+        {
+          model: this.db,
+          as: 'recommendations',
+          attributes: [
+            'id',
+            'primaryEmail',
+            'fullName',
+            'type',
+            'searchable',
+            'subscriber',
+            'recommendationsCount',
+          ],
+        },
+      ],
+    });
   }
 
   async find(
     {
+      query,
       name,
       activity,
       location,
@@ -40,11 +58,14 @@ export class ProfileRepository {
     }: IProfileSearchQuery,
     { limit = 10, offset = 0 }: IPaginationParams
   ): Promise<[number, IProfileDTO[]]> {
-    const query = {
+    const searchQuery = {
       where: {
         [Op.and]: [
           {
             searchable: true,
+          },
+          !!query && {
+            searchString: { [Op.match]: Sequelize.fn('to_tsquery', 'spanish', name) },
           },
           !!name && {
             fullName: {
@@ -89,14 +110,14 @@ export class ProfileRepository {
           },
         ].filter((v) => !!v) as WhereOptions<Profile>,
       },
-      // include: [
-      //   {
-      //     association: 'recommendations',
-      //     through: {
-      //       attributes: ['id', 'primaryEmail', 'fullName'],
-      //     },
-      //   },
-      // ],
+      include: [
+        {
+          association: 'recommendations',
+          through: {
+            attributes: ['id', 'primaryEmail', 'fullName'],
+          },
+        },
+      ],
       order: [
         ['subscriber', 'DESC'],
         ['recommendationsCount', 'DESC'],
@@ -123,18 +144,17 @@ export class ProfileRepository {
       ],
     };
     return [
-      await this.db.count({ ...query, attributes: [] }),
-      await this.db.findAll({ ...query, limit, offset }),
+      await this.db.count({ ...searchQuery, attributes: [] }),
+      await this.db.findAll({ ...searchQuery, limit, offset }),
     ];
   }
 
-  async create(userInput: IProfileCreationQuery): Promise<IProfile> {
+  async create(userInput: IProfileCreationQuery): Promise<Profile> {
     const newProfile = {
       primaryEmail: userInput.email,
       type: userInput.type,
     };
-    // @ts-ignore
-    return this.db.create(newProfile);
+    return await this.db.create(newProfile);
   }
 
   async delete(id: string) {
@@ -142,7 +162,9 @@ export class ProfileRepository {
   }
 
   async update(id: string, values: IExtraProfileInformation & ISearchableProfile) {
-    await this.db.update(values, { where: { id } });
-    return this.db.findByPk(id);
+    const record = await this.db.findByPk(id);
+    if (!record) throw ProfileErrors.profileDoesNotExist;
+    await record.update(values);
+    return record;
   }
 }

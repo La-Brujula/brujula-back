@@ -24,7 +24,7 @@ const authenticateRequest = handleAsync(async (req: Request, res: Response, next
 
   const accountRepo = (Container.get('Database') as Database).sequelize.getRepository(Account);
 
-  if ((await accountRepo.findByPk(decodedToken.email)) === null) {
+  if ((await accountRepo.findByPk(decodedToken.email, { attributes: ['email'] })) === null) {
     throw new ServiceError('AE01', 'Account does not exist', 403);
   }
 

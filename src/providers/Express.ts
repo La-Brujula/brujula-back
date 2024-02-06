@@ -9,6 +9,7 @@ import { handleError } from '@/shared/helpers/errorHandler';
 import Logger from './Logger';
 import Routes from './Routes';
 import config from '@/config';
+import { randomBytes } from 'crypto';
 
 class Express {
   public express: express.Application;
@@ -45,6 +46,11 @@ class Express {
         abortOnLimit: true,
       })
     );
+    this.express.use((req, res, next) => {
+      req.id = new Date().valueOf() + randomBytes(4).toString('hex');
+      res.setHeader('x-api-trace-id', req.id);
+      next();
+    });
   }
 
   setApiRoutes() {
