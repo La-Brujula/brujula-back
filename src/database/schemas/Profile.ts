@@ -56,8 +56,10 @@ export default class Profile extends Model implements IProfile {
   @Column({
     type: DataTypes.VIRTUAL,
     get() {
-      if (!this.dataValues.firstName) return null;
-      return `${this.dataValues.firstName} ${this.dataValues.lastName}`;
+      const firstName = this.getDataValue('firstName'),
+        lastName = this.getDataValue('lastName');
+      if (!firstName || !lastName) return null;
+      return `${firstName} ${lastName}`;
     },
   })
   fullName?: string;

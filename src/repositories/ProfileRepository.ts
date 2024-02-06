@@ -17,27 +17,30 @@ import ProfileErrors from '@/services/profile/ProfileErrors';
 @Service('ProfileRepository')
 export class ProfileRepository {
   declare db: Repository<Profile>;
+  declare recommendationsInclude: {};
   constructor(@Inject('Database') database: Database) {
     this.db = database.sequelize.getRepository(Profile);
+
+    this.recommendationsInclude = {
+      model: this.db,
+      as: 'recommendations',
+      attributes: [
+        'id',
+        'primaryEmail',
+        'fullName',
+        'firstName',
+        'lastName',
+        'type',
+        'searchable',
+        'subscriber',
+        'recommendationsCount',
+      ],
+    };
   }
 
   async findById(id: string) {
     return await this.db.findByPk(id, {
-      include: [
-        {
-          model: this.db,
-          as: 'recommendations',
-          attributes: [
-            'id',
-            'primaryEmail',
-            'fullName',
-            'type',
-            'searchable',
-            'subscriber',
-            'recommendationsCount',
-          ],
-        },
-      ],
+      include: [this.recommendationsInclude],
     });
   }
 
@@ -57,7 +60,7 @@ export class ProfileRepository {
       certifications,
     }: IProfileSearchQuery,
     { limit = 10, offset = 0 }: IPaginationParams
-  ): Promise<[number, IProfileDTO[]]> {
+  ): Promise<[number, Profile[]]> {
     const searchQuery = {
       where: {
         [Op.and]: [
@@ -65,7 +68,7 @@ export class ProfileRepository {
             searchable: true,
           },
           !!query && {
-            searchString: { [Op.match]: Sequelize.fn('to_tsquery', 'spanish', name) },
+            searchString: { [Op.match]: Sequelize.fn('to_tsquery', name) },
           },
           !!name && {
             fullName: {
@@ -110,14 +113,7 @@ export class ProfileRepository {
           },
         ].filter((v) => !!v) as WhereOptions<Profile>,
       },
-      include: [
-        {
-          association: 'recommendations',
-          through: {
-            attributes: ['id', 'primaryEmail', 'fullName'],
-          },
-        },
-      ],
+      include: [this.recommendationsInclude],
       order: [
         ['subscriber', 'DESC'],
         ['recommendationsCount', 'DESC'],
@@ -128,6 +124,7 @@ export class ProfileRepository {
         'primaryEmail',
         'type',
         'subscriber',
+        'fullName',
         'firstName',
         'lastName',
         'nickName',
@@ -140,7 +137,9 @@ export class ProfileRepository {
         'state',
         'country',
         'postalCode',
+        'location',
         'profilePictureUrl',
+        'headline',
       ],
     };
     return [

@@ -49,7 +49,9 @@ export class ProfileMapper implements IMapper<IProfile> {
     };
   }
   static toBasicProfile(profile: Profile): IBasicProfile {
-    profile = profile.dataValues;
+    if (!profile) {
+      throw new Error('Profile cannot be null');
+    }
     return {
       id: profile.id,
       primaryEmail: profile.primaryEmail,

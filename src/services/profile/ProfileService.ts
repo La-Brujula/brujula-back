@@ -52,7 +52,8 @@ export default class ProfileService {
       limit: parameters.limit,
       offset: parameters.offset,
     };
-    const [total_profiles, profiles] = await this.profileRepository.find(parameters, pagination);
+    const [total_profiles, dbProfiles] = await this.profileRepository.find(parameters, pagination);
+    const profiles = dbProfiles.map(ProfileMapper.toDto);
     Logger.debug('ProfileService | Search | Got results');
     return ServiceResponse.paginate(profiles, total_profiles, parameters.offset);
   }
