@@ -6,16 +6,20 @@ export function handleAsync(asyncFunction: RequestHandler) {
     try {
       return await asyncFunction(req, res, next);
     } catch (error: any) {
-      let logType;
-      if (!!error.errorCode) {
-        logType = 'warn';
-        res.status(error.httpCode).json(error.toJson());
-      } else {
-        logType = 'error';
-        res.status(500).json(error);
+      if (res.headersSent) {
+        Logger.log('error', error);
+        Logger.log('error', 'Headers had been already sent');
+        return;
       }
-      Logger.log(logType || 'error', error);
-      return;
+      if (!!error.errorCode) {
+        Logger.log('warn', error);
+        return res.status(error.httpCode).json(error.toJson());
+      } else {
+        Logger.log('error', error);
+        console.log(error);
+
+        return res.status(500).json(error);
+      }
     }
   };
 }

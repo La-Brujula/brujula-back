@@ -32,9 +32,6 @@ export default class AuthenticationController {
     const userInput: IAuthenticationRequestBody = req.body;
     const accountsSignUpResponse: ServiceResponse<IAuthenticationResponseBody> =
       await this.authService.addAccount(userInput);
-    if (!accountsSignUpResponse.isSuccess) {
-      sendResponse(res, accountsSignUpResponse);
-    }
     Logger.debug('AuthenticationController | SignUp | End');
     return sendResponse(res, accountsSignUpResponse);
   });
@@ -43,33 +40,23 @@ export default class AuthenticationController {
     Logger.debug('AuthenticationController | DeleteAccount | Start');
     const accountsDeleteAccountResponse: ServiceResponse<boolean> =
       await this.authService.deleteAccount(req.user);
-    if (!accountsDeleteAccountResponse.isSuccess) {
-      sendResponse(res, accountsDeleteAccountResponse);
-    }
     Logger.debug('AuthenticationController | DeleteAccount | End');
     return sendResponse(res, accountsDeleteAccountResponse);
   });
 
   public sendPasswordReset = handleAsync(async (req: Request, res: Response) => {
-    const accountsPasswordResetResponse = await this.authService.createPasswordResetPin(
-      req.user.email
-    );
+    const { email } = req.body;
+    const accountsPasswordResetResponse = await this.authService.createPasswordResetPin(email);
 
-    await sendEmail(req.user.email, 'Reinicia tu contraseña', {
-      template: 'passwordReset',
-      context: {
-        passwordResetToken: accountsPasswordResetResponse.getValue(),
-      },
-    });
     return sendResponse(res, accountsPasswordResetResponse);
   });
 
   public resetPassword = handleAsync(async (req: Request, res: Response) => {
-    const { password, code } = req.body;
+    const { email, password, code } = req.body;
     const accountsPasswordResetResponse = await this.authService.changePassword(
       code,
       password,
-      req.user.email
+      email
     );
 
     return sendResponse(res, accountsPasswordResetResponse);
@@ -80,9 +67,6 @@ export default class AuthenticationController {
     const accountMeResponse: ServiceResponse<IAccountDTO> = await this.authService.getUser(
       req.user.email
     );
-    if (!accountMeResponse.isSuccess) {
-      sendResponse(res, accountMeResponse);
-    }
     Logger.debug('AuthenticationController | Me | End');
     return sendResponse(res, accountMeResponse);
   });

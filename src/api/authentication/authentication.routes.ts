@@ -1,4 +1,4 @@
-import { NextFunction, Response, Router, Request } from 'express';
+import { Router } from 'express';
 import AuthenticationController from './authentication.controllers';
 import Container from 'typedi';
 import { body } from 'express-validator';
@@ -19,6 +19,7 @@ export default (app: Router) => {
   router.post(
     '/signup',
     bodyMatchesIAuthenticationRequest(),
+    body('type').isIn(['fisica', 'moral']),
     handleValidationErrors,
     authController.signUp
   );
@@ -30,10 +31,21 @@ export default (app: Router) => {
     authController.logIn
   );
 
+  router.post(
+    '/resetPassword',
+    [body('email').isEmail().normalizeEmail()],
+    handleValidationErrors,
+    authController.sendPasswordReset
+  );
+  router.patch(
+    '/resetPassword',
+    bodyMatchesIAuthenticationRequest(),
+    body('code').isString(),
+    handleValidationErrors,
+    authController.resetPassword
+  );
+
   router.use(authenticateRequest);
 
   router.route('/me').get(authController.me).delete(authController.deleteAccount);
-
-  router.post('/me/password/reset', authController.sendPasswordReset);
-  router.patch('/me/password', authController.resetPassword);
 };

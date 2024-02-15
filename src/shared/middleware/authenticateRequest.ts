@@ -3,8 +3,12 @@ import { handleAsync } from '../utils/sendError';
 import AuthenticationErrors from '@/services/authentication/AuthenticationErrors';
 import { decodeToken } from '../utils/jwtUtils';
 import config from '@/config';
+import Container from 'typedi';
+import Database from '@/database/Database';
+import { ServiceError } from '../classes/serviceError';
+import Account from '@/database/schemas/Account';
 
-const authenticateRequest = handleAsync((req: Request, res: Response, next: NextFunction) => {
+const authenticateRequest = handleAsync(async (req: Request, res: Response, next: NextFunction) => {
   // Get the Authorization header and ensure it's not empty
   const authHeader = req.headers.authorization;
   if (!authHeader) throw AuthenticationErrors.notLoggedIn;
@@ -14,10 +18,22 @@ const authenticateRequest = handleAsync((req: Request, res: Response, next: Next
   if (prefix != 'Bearer' || !token) throw AuthenticationErrors.badToken;
 
   // Get user from token
-  const decodedToken = decodeToken(token, config.application.jwtSecret);
+  const decodedToken = await decodeToken(token, config.application.jwtSecret).catch((err) => {
+    throw new ServiceError('AE05', err, 401);
+  });
+
+  const accountRepo = (Container.get('Database') as Database).sequelize.getRepository(Account);
+
+  if ((await accountRepo.findByPk(decodedToken.email, { attributes: ['email'] })) === null) {
+    throw new ServiceError('AE01', 'Account does not exist', 403);
+  }
 
   // Attach the user to the request
-  req.user = { email: decodedToken.email, role: decodedToken.role };
+  req.user = {
+    email: decodedToken.email,
+    role: decodedToken.role,
+    ProfileId: decodedToken.ProfileId,
+  };
 
   next();
 });
