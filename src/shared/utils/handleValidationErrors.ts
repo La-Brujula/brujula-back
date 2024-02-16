@@ -3,6 +3,7 @@ import { matchedData, validationResult } from 'express-validator';
 
 export default function handleValidationErrors(req: Request, res: Response, next: NextFunction) {
   const result = validationResult(req);
+
   if (result.isEmpty()) {
     req.body = matchedData(req);
     return next();

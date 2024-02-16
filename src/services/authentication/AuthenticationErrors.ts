@@ -11,6 +11,11 @@ const AuthenticationErrors = {
   exceededPasswordResetAttempts: new ServiceError('AE08', 'Too many password reset attempts', 403),
   wrongPasswordResetToken: new ServiceError('AE09', 'Invalid password reset pin', 400),
   passwordResetTokenExpired: new ServiceError('AE10', 'Password reset pin is expired', 400),
+  insufficientPermissions: new ServiceError(
+    'AE11',
+    'Insufficient permissions to complete request',
+    403
+  ),
 };
 
 export default AuthenticationErrors;

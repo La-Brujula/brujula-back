@@ -16,7 +16,7 @@ export function handleAsync(asyncFunction: RequestHandler) {
         return res.status(error.httpCode).json(error.toJson());
       } else {
         Logger.log('error', error);
-        console.log(error);
+        console.error(error);
 
         return res.status(500).json(error);
       }

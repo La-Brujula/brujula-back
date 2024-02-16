@@ -5,6 +5,7 @@ import {
   BelongsToMany,
   Column,
   CreatedAt,
+  DataType,
   Default,
   DeletedAt,
   ForeignKey,
@@ -127,8 +128,8 @@ export default class Profile extends Model implements IProfile {
   location?: string;
 
   @Column university?: string;
-  @Column associations?: string;
-  @Column certifications?: string;
+  @Column(DataType.TEXT) associations?: string;
+  @Column(DataType.TEXT) certifications?: string;
 
   @IsUrl
   @Column
@@ -157,15 +158,10 @@ export default class Profile extends Model implements IProfile {
   @DeletedAt
   deletedAt!: Date;
 
-  @AfterUpdate
-  static updateRecommendationsCount(instance: Profile) {
-    console.log(instance.$count('recommendations'));
-  }
-
   @BeforeUpdate({ name: 'updateVector' })
   static async updateVector(instance: Profile) {
-    function addWeightIfExists(v: string | undefined, weight: 'A' | 'B' | 'C'): string[] {
-      if (v === undefined) return [];
+    function addWeightIfExists(v: string | undefined | null, weight: 'A' | 'B' | 'C'): string[] {
+      if (!v) return [];
       return v.split(' ').map((i) => i + ':' + weight);
     }
     instance.recommendationsCount = await instance.$count('recommendations');

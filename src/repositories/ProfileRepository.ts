@@ -38,6 +38,13 @@ export class ProfileRepository {
     };
   }
 
+  async findByEmail(email: string) {
+    return await this.db.findOne({
+      where: { primaryEmail: email },
+      include: [this.recommendationsInclude],
+    });
+  }
+
   async findById(id: string) {
     return await this.db.findByPk(id, {
       include: [this.recommendationsInclude],
@@ -58,15 +65,16 @@ export class ProfileRepository {
       probono,
       associations,
       certifications,
+      email,
     }: IProfileSearchQuery,
     { limit = 10, offset = 0 }: IPaginationParams
   ): Promise<[number, Profile[]]> {
     const searchQuery = {
       where: {
         [Op.and]: [
-          {
-            searchable: true,
-          },
+          // {
+          //   searchable: true,
+          // },
           !!query && {
             searchString: { [Op.match]: Sequelize.fn('to_tsquery', name) },
           },
@@ -111,7 +119,8 @@ export class ProfileRepository {
               [Op.match]: Sequelize.fn('to_tsquery', certifications),
             },
           },
-        ].filter((v) => !!v) as WhereOptions<Profile>,
+          !!email && { primaryEmail: email },
+        ].filter((v) => v !== false) as WhereOptions<Profile>,
       },
       include: [this.recommendationsInclude],
       order: [

@@ -32,7 +32,7 @@ export default class ProfileService {
   ): Promise<ServiceResponse<IProfileDTO>> {
     Logger.debug('ProfileService | createProfile | Start');
     Logger.debug('ProfileService | createProfile | Checking if profile already exists');
-    if (await this.profileExists(newAccount.email)) {
+    if (await this.profileExistsByEmail(newAccount.email)) {
       throw ProfileErrors.existingProfile;
     }
 
@@ -100,8 +100,6 @@ export default class ProfileService {
       throw ProfileErrors.profileDoesNotExist;
     }
 
-    console.log(await profileDb.$count('recommendations'));
-
     const profile = ProfileMapper.toProfile(profileDb);
     Logger.debug('ProfileService | GetFullProfile | Finished');
     return ServiceResponse.ok(profile);
@@ -122,5 +120,8 @@ export default class ProfileService {
 
   private async profileExists(id: string) {
     return !!(await this.profileRepository.findById(id));
+  }
+  private async profileExistsByEmail(email: string) {
+    return !!(await this.profileRepository.findByEmail(email));
   }
 }
