@@ -3,19 +3,12 @@ import { body, query } from 'express-validator';
 export const bodyMatchesSearchQuery = [
   query('name').optional().trim().isString().trim().toLowerCase(),
   query('activity')
-    .optional()
-    .trim()
+    .optional().trim()
     .isString()
     .trim()
     .matches(/\d\d{2}?-?\d{2}?/),
   query('location').optional().trim().isString().trim().toLowerCase(),
-  query('gender')
-    .optional()
-    .trim()
-    .isString()
-    .trim()
-    .toLowerCase()
-    .isIn(['male', 'female', 'other']),
+  query('gender').optional().trim().isString().trim().toLowerCase().isIn(['male', 'female', 'other']),
   query('remote').optional().trim().isBoolean().toBoolean(),
   query('type').optional().trim().isString().trim().toLowerCase().isIn(['moral', 'fisica']),
   query('language').optional().trim().isString().isISO6391(),
@@ -43,25 +36,21 @@ export const validateProfileUpdate = [
   body('secondaryEmails').optional().trim().isArray(),
   body('secondaryEmails.*').optional().trim().isEmail().normalizeEmail(),
   body('primaryActivity')
-    .optional()
-    .trim()
+    .optional().trim()
     .isString()
     .matches(/\d{3}-\d{2}/),
   body('secondaryActivity')
-    .optional()
-    .trim()
+    .optional().trim()
     .isString()
     .matches(/\d{3}-\d{2}/),
   body('thirdActivity')
-    .optional()
-    .trim()
+    .optional().trim()
     .isString()
     .matches(/\d{3}-\d{2}/),
   body('phoneNumbers').optional().trim().isArray(),
   body('phoneNumbers.*').optional().trim().isString(),
   body('languages')
-    .optional()
-    .trim()
+    .optional().trim()
     .isArray()
     .customSanitizer((userInput) => {
       return userInput.map(
@@ -71,8 +60,7 @@ export const validateProfileUpdate = [
     }),
   body('languages.*.lang').optional().trim().isString().isISO6391(),
   body('languages.*.proficiency')
-    .optional()
-    .trim()
+    .optional().trim()
     .isString()
     .isIn(['basic', 'intermediate', 'advanced', 'native']),
   body('gender').optional().trim().isString().isIn(['male', 'female', 'other']),

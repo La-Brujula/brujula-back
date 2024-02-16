@@ -1,6 +1,5 @@
 import { IProfile } from '@/models/profile/profile';
 import {
-  AfterUpdate,
   BeforeUpdate,
   BelongsToMany,
   Column,
