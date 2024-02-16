@@ -1,7 +1,9 @@
+export type AccountRoleTypes = 'user' | 'editor' | 'manager' | 'admin';
+
 export interface IAccount {
   email: string;
   password: string;
-  role: string;
+  role: AccountRoleTypes;
   passwordResetPinExpirationTime?: Date;
   passwordResetPin?: string;
   passwordRecoveryAttempts: number;
@@ -10,7 +12,7 @@ export interface IAccount {
 
 export interface IUpdateAccount {
   password?: string;
-  role?: string;
+  role?: AccountRoleTypes;
   passwordResetPinExpirationTime?: Date | null;
   passwordResetPin?: string | null;
   passwordRecoveryAttempts?: number;
@@ -18,7 +20,7 @@ export interface IUpdateAccount {
 
 export interface IAccountDTO {
   email: string;
-  role: string;
+  role: AccountRoleTypes;
   ProfileId: string;
 }
 

@@ -63,7 +63,7 @@ export default class ProfileController {
       req.user = { email: '', role: 'user', ProfileId: req.params.profileId };
       return next();
     }
-    req.user.ProfileId = req.params.ProfileId;
+    req.user.ProfileId = req.params.profileId;
     next();
   };
 }

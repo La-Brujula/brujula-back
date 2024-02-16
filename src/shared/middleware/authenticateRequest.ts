@@ -24,15 +24,19 @@ const authenticateRequest = handleAsync(async (req: Request, res: Response, next
 
   const accountRepo = (Container.get('Database') as Database).sequelize.getRepository(Account);
 
-  if ((await accountRepo.findByPk(decodedToken.email, { attributes: ['email'] })) === null) {
+  const accountRecord = await accountRepo.findByPk(decodedToken.email, {
+    attributes: ['email', 'role', 'ProfileId'],
+  });
+
+  if (accountRecord === null) {
     throw new ServiceError('AE01', 'Account does not exist', 403);
   }
 
   // Attach the user to the request
   req.user = {
-    email: decodedToken.email,
-    role: decodedToken.role,
-    ProfileId: decodedToken.ProfileId,
+    email: accountRecord.email,
+    role: accountRecord.role,
+    ProfileId: accountRecord.ProfileId,
   };
 
   next();

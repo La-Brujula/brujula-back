@@ -10,6 +10,7 @@ import {
   validateProfileUpdate,
 } from './profile.validators';
 import { handleAsync } from '@/shared/utils/sendError';
+import isAdmin from '@/shared/middleware/isAdmin';
 
 const notSelf = handleAsync((req, _, next) => {
   if (req.user.ProfileId == req.params.profileId) throw Error("Can't affect self");
@@ -43,5 +44,15 @@ export default (app: Router) => {
     .post(profileController.recommendProfile)
     .delete(profileController.revokeRecommendation);
 
-  router.get('/:profileId', profileController.attachParamToUser, profileController.getUserProfile);
+  router
+    .route('/:profileId')
+    .get(profileController.attachParamToUser, profileController.getUserProfile)
+    .patch(
+      authenticateRequest,
+      isAdmin,
+      validateProfileUpdate,
+      handleValidationErrors,
+      profileController.attachParamToUser,
+      profileController.updateMe
+    );
 };

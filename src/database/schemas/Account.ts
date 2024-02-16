@@ -1,9 +1,10 @@
-import { IAccount } from '@/models/authentication/authentication';
+import { IAccount, AccountRoleTypes } from '@/models/authentication/authentication';
 import Profile from './Profile';
 import {
   BelongsTo,
   Column,
   CreatedAt,
+  DataType,
   DeletedAt,
   ForeignKey,
   IsEmail,
@@ -14,8 +15,6 @@ import {
   UpdatedAt,
 } from 'sequelize-typescript';
 
-type AccountRole = 'user' | 'editor' | 'manager' | 'admin';
-
 @Table({ tableName: 'accounts', modelName: 'Account' })
 export default class Account extends Model implements IAccount {
   @IsEmail
@@ -25,7 +24,8 @@ export default class Account extends Model implements IAccount {
 
   @Column password!: string;
 
-  @Column role!: AccountRole;
+  @Column(DataType.ENUM('user', 'editor', 'manager', 'admin'))
+  role!: AccountRoleTypes;
 
   @IsInt
   @Column

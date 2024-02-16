@@ -93,4 +93,5 @@ export interface IProfileSearchQuery {
   probono?: boolean;
   associations?: string;
   certifications?: string;
+  email?: string;
 }
