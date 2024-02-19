@@ -1,4 +1,5 @@
 import dotenv from 'dotenv';
+import { Dialect } from 'sequelize';
 
 const envConfig = dotenv.config();
 
@@ -30,7 +31,7 @@ export default {
   },
 
   database: {
-    dialect: process.env.DB_DIALECT || 'sqlite',
+    dialect: (process.env.DB_DIALECT || 'sqlite') as Dialect,
     username: process.env.DB_USERNAME || 'username',
     password: process.env.DB_PASSWORD || 'password',
     host: process.env.DB_HOST || 'localhost',
