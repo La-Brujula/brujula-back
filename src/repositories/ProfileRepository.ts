@@ -1,14 +1,12 @@
 import { Inject, Service } from 'typedi';
 import {
   IExtraProfileInformation,
-  IProfile,
   IProfileCreationQuery,
-  IProfileDTO,
   IProfileSearchQuery,
   ISearchableProfile,
 } from '@/models/profile/profile';
 import Database from '@/database/Database';
-import { Op, Order, Sequelize, WhereOptions } from 'sequelize';
+import { Op, Order, Sequelize, Transaction, WhereOptions, cast, col, where } from 'sequelize';
 import Profile from '@/database/schemas/Profile';
 import { IPaginationParams } from '@/shared/classes/pagination';
 import { Repository } from 'sequelize-typescript';
@@ -38,14 +36,15 @@ export class ProfileRepository {
     };
   }
 
-  async findByEmail(email: string) {
+  async findByEmail(email: string, transaction?: Transaction) {
     return await this.db.findOne({
       where: { primaryEmail: email },
       include: [this.recommendationsInclude],
+      transaction: transaction,
     });
   }
 
-  async findById(id: string) {
+  async findById(id: string, transaction?: Transaction) {
     return await this.db.findByPk(id, {
       include: [this.recommendationsInclude],
     });
@@ -75,51 +74,85 @@ export class ProfileRepository {
           // {
           //   searchable: true,
           // },
-          !!query && {
-            searchString: { [Op.match]: Sequelize.fn('to_tsquery', name) },
+          query !== undefined && {
+            searchString: { [Op.match]: Sequelize.fn('to_tsquery', 'spanish', query) },
           },
-          !!name && {
-            fullName: {
-              [Op.match]: Sequelize.fn('to_tsquery', name),
-            },
+          name !== undefined && {
+            [Op.or]: [
+              {
+                firstName: {
+                  [Op.iLike]: '%' + name + '%',
+                },
+              },
+              {
+                lastName: {
+                  [Op.iLike]: '%' + name + '%',
+                },
+              },
+            ],
           },
-          !!activity && {
+          activity !== undefined && {
             [Op.or]: [
               { primaryActivity: activity },
               { secondaryActivity: activity },
               { thirdActivity: activity },
             ],
           },
-          !!location && {
-            location: {
-              [Op.match]: Sequelize.fn('to_tsquery', location),
-            },
+          location !== undefined && {
+            [Op.or]: [
+              {
+                city: {
+                  [Op.iLike]: '%' + location + '%',
+                },
+              },
+              {
+                country: {
+                  [Op.iLike]: '%' + location + '%',
+                },
+              },
+              {
+                state: {
+                  [Op.iLike]: '%' + location + '%',
+                },
+              },
+              {
+                postalCode: {
+                  [Op.iLike]: '%' + location + '%',
+                },
+              },
+            ],
           },
-          !!gender && { gender: gender },
-          !!remote && { remote },
-          !!type && { type },
-          !!language && {
-            language: {
-              [Op.contains]: language,
-            },
-          },
-          !!university && {
+          gender !== undefined && { gender },
+          remote !== undefined && { remote },
+          type !== undefined && { type },
+          language !== undefined &&
+            where(cast(col('"Profile"."languages"'), 'text'), Op.iLike, '%' + language + '%'),
+          university !== undefined && {
             university: {
-              [Op.match]: Sequelize.fn('to_tsquery', university),
+              [Op.iLike]: '%' + university + '%',
             },
           },
-          !!probono && { probono },
-          !!associations && {
+          probono !== undefined && { probono },
+          associations !== undefined && {
             associations: {
-              [Op.match]: Sequelize.fn('to_tsquery', associations),
+              [Op.iLike]: '%' + associations + '%',
             },
           },
-          !!certifications && {
+          certifications !== undefined && {
             certifications: {
-              [Op.match]: Sequelize.fn('to_tsquery', certifications),
+              [Op.iLike]: '%' + certifications + '%',
             },
           },
-          !!email && { primaryEmail: email },
+          email !== undefined && {
+            [Op.or]: [
+              {
+                primaryEmail: {
+                  [Op.iLike]: '%' + email + '%',
+                },
+              },
+              where(cast(col('"Profile"."secondayEmail"'), 'text'), Op.iLike, '%' + email + '%'),
+            ],
+          },
         ].filter((v) => v !== false) as WhereOptions<Profile>,
       },
       include: [this.recommendationsInclude],
@@ -128,28 +161,6 @@ export class ProfileRepository {
         ['recommendationsCount', 'DESC'],
         ['firstName', 'DESC'],
       ] as Order,
-      attributes: [
-        'id',
-        'primaryEmail',
-        'type',
-        'subscriber',
-        'fullName',
-        'firstName',
-        'lastName',
-        'nickName',
-        'primaryActivity',
-        'recommendationsCount',
-        'secondaryActivity',
-        'thirdActivity',
-        'gender',
-        'city',
-        'state',
-        'country',
-        'postalCode',
-        'location',
-        'profilePictureUrl',
-        'headline',
-      ],
     };
     return [
       await this.db.count({ ...searchQuery, attributes: [] }),
@@ -157,22 +168,26 @@ export class ProfileRepository {
     ];
   }
 
-  async create(userInput: IProfileCreationQuery): Promise<Profile> {
+  async create(userInput: IProfileCreationQuery, transaction?: Transaction): Promise<Profile> {
     const newProfile = {
       primaryEmail: userInput.email,
       type: userInput.type,
     };
-    return await this.db.create(newProfile);
+    return await this.db.create(newProfile, { transaction });
   }
 
-  async delete(id: string) {
-    return (await this.db.destroy({ where: { id } })) > 0;
+  async delete(id: string, transaction?: Transaction) {
+    return (await this.db.destroy({ where: { id }, transaction })) > 0;
   }
 
-  async update(id: string, values: IExtraProfileInformation & ISearchableProfile) {
-    const record = await this.db.findByPk(id);
+  async update(
+    id: string,
+    values: IExtraProfileInformation & ISearchableProfile,
+    transaction?: Transaction
+  ) {
+    const record = await this.db.findByPk(id, { transaction });
     if (!record) throw ProfileErrors.profileDoesNotExist;
-    await record.update(values);
+    await record.update(values, { transaction });
     return record;
   }
 }

@@ -1,5 +1,6 @@
 import { IProfile } from '@/models/profile/profile';
 import {
+  AllowNull,
   BeforeUpdate,
   BelongsToMany,
   Column,
@@ -18,7 +19,7 @@ import {
   Table,
   UpdatedAt,
 } from 'sequelize-typescript';
-import { DataTypes, UUIDV4 } from 'sequelize';
+import { UUIDV4 } from 'sequelize';
 import { ProfileMapper } from '@/models/profile/profileMapper';
 
 const ACTIVITY_REGEX = /\d{3}-\d{2}/;
@@ -35,7 +36,7 @@ export default class Profile extends Model implements IProfile {
   @Column
   primaryEmail!: string;
 
-  @Column({ type: DataTypes.ENUM, values: ['moral', 'fisica'] })
+  @Column(DataType.ENUM('moral', 'fisica'))
   type!: 'moral' | 'fisica';
 
   @Default(false)
@@ -53,20 +54,17 @@ export default class Profile extends Model implements IProfile {
   @Column firstName?: string;
   @Column lastName?: string;
 
-  @Column({
-    type: DataTypes.VIRTUAL,
-    get() {
-      const firstName = this.getDataValue('firstName'),
-        lastName = this.getDataValue('lastName');
-      if (!firstName || !lastName) return null;
-      return `${firstName} ${lastName}`;
-    },
-  })
-  fullName?: string;
+  @Column(DataType.VIRTUAL(DataType.STRING, ['firstName', 'lastName']))
+  get fullName(): string | undefined {
+    const firstName = this.getDataValue('firstName'),
+      lastName = this.getDataValue('lastName');
+    if (!firstName || !lastName) return undefined;
+    return `${firstName} ${lastName}`;
+  }
 
   @Column nickName?: string;
 
-  @Column({ type: DataTypes.ENUM, values: ['male', 'female', 'other'] })
+  @Column(DataType.ENUM('male', 'female', 'other'))
   gender?: 'male' | 'female' | 'other';
 
   @Is('Activity', (v) => ACTIVITY_REGEX.test(v))
@@ -81,19 +79,29 @@ export default class Profile extends Model implements IProfile {
   @Column
   thirdActivity?: string;
 
-  @Column(DataTypes.ARRAY(DataTypes.STRING)) secondaryEmails?: string[];
-  @Column(DataTypes.ARRAY(DataTypes.STRING)) phoneNumbers?: string[];
-  @Column({
-    type: DataTypes.ARRAY(DataTypes.STRING),
-    get() {
-      return this.dataValues.languages?.map((v: string) => {
-        const [lang, proficiency] = v.split(':');
-        return { lang, proficiency };
-      });
-    },
-  })
-  languages?: string[];
-  @Column(DataTypes.ARRAY(DataTypes.STRING)) externalLinks?: string[];
+  @AllowNull
+  @Default([])
+  @Column(DataType.ARRAY(DataType.STRING))
+  secondaryEmails?: string[];
+
+  @AllowNull
+  @Default([])
+  @Column(DataType.ARRAY(DataType.STRING))
+  phoneNumbers?: string[];
+
+  @AllowNull
+  @Column(DataType.ARRAY(DataType.STRING))
+  get languages(): { lang: string; proficiency: string }[] {
+    return this.getDataValue('languages')?.map((v: string) => {
+      const [lang, proficiency] = v.split(':');
+      return { lang, proficiency };
+    });
+  }
+
+  @AllowNull
+  @Default([])
+  @Column(DataType.ARRAY(DataType.STRING))
+  externalLinks?: string[];
 
   @Column whatsapp?: string;
   @Column imdb?: string;
@@ -111,24 +119,27 @@ export default class Profile extends Model implements IProfile {
   @Column country?: string;
   @Column postalCode?: string;
 
-  @Column({
-    type: DataTypes.VIRTUAL,
-    get() {
-      return [
-        this.dataValues.city,
-        this.dataValues.state,
-        this.dataValues.country,
-        !!this.dataValues.postalCode && 'CP: ' + this.dataValues.postalCode,
-      ]
-        .filter((v) => !!v)
-        .join(', ');
-    },
-  })
-  location?: string;
+  @Column(DataType.VIRTUAL(DataType.STRING, ['city', 'state', 'country', 'postalCode']))
+  get location(): string {
+    return [
+      this.get('city'),
+      this.get('state'),
+      this.get('country'),
+      !!this.get('postalCode') && 'CP: ' + this.get('postalCode'),
+    ]
+      .filter((v) => !!v)
+      .join(', ');
+  }
 
   @Column university?: string;
   @Column(DataType.TEXT) associations?: string;
   @Column(DataType.TEXT) certifications?: string;
+
+  @Column
+  probono?: boolean;
+
+  @Column
+  remote?: boolean;
 
   @IsUrl
   @Column
@@ -142,10 +153,10 @@ export default class Profile extends Model implements IProfile {
   @Column
   birthday?: Date;
 
-  @Column({ type: DataTypes.ENUM, values: ['local', 'state', 'national', 'international'] })
+  @Column(DataType.ENUM('local', 'state', 'national', 'international'))
   workRadius?: 'local' | 'state' | 'national' | 'international';
 
-  @Column(DataTypes.TSVECTOR) searchString?: string;
+  @Column(DataType.TSVECTOR) searchString?: string;
 
   @BelongsToMany(() => Profile, () => ProfileRecommendations, 'profileId', 'recommendedBy')
   recommendations!: Profile[];
@@ -157,31 +168,39 @@ export default class Profile extends Model implements IProfile {
   @DeletedAt
   deletedAt!: Date;
 
-  @BeforeUpdate({ name: 'updateVector' })
+  @BeforeUpdate
   static async updateVector(instance: Profile) {
     function addWeightIfExists(v: string | undefined | null, weight: 'A' | 'B' | 'C'): string[] {
       if (!v) return [];
       return v.split(' ').map((i) => i + ':' + weight);
     }
-    instance.recommendationsCount = await instance.$count('recommendations');
-    instance.searchable =
-      !!instance.primaryActivity && !!instance.fullName && !!instance.gender && !!instance.location;
-    instance.searchString = instance.sequelize.fn(
-      'to_tsvector',
-      [
+    instance.setDataValue('recommendationsCount', await instance.$count('recommendations'));
+    instance.setDataValue(
+      'searchable',
+      ['primaryActivity', 'firstName', 'gender', 'state'].every((p) => !!instance.get(p))
+    );
+    instance.setDataValue(
+      'searchString',
+      instance.sequelize.fn(
+        'to_tsvector',
         'spanish',
-        instance.dataValues.fullName?.split(' ').map((v: string) => v + ':A'),
-        addWeightIfExists(instance.dataValues.primaryActivity, 'A'),
-        addWeightIfExists(instance.dataValues.secondaryActivity, 'B'),
-        addWeightIfExists(instance.dataValues.thirdActivity, 'B'),
-        addWeightIfExists(instance.dataValues.location, 'B'),
-        addWeightIfExists(instance.dataValues.certifications, 'C'),
-        addWeightIfExists(instance.dataValues.associations, 'C'),
-        addWeightIfExists(instance.dataValues.university, 'C'),
-      ]
-        .flat()
-        .join(' ')
-    ) as unknown as string;
+        [
+          instance
+            .get('fullName')
+            ?.split(' ')
+            .map((v: string) => v + ':A'),
+          addWeightIfExists(instance.get('primaryActivity'), 'A'),
+          addWeightIfExists(instance.get('secondaryActivity'), 'B'),
+          addWeightIfExists(instance.get('thirdActivity'), 'B'),
+          addWeightIfExists(instance.get('location'), 'B'),
+          addWeightIfExists(instance.get('certifications'), 'C'),
+          addWeightIfExists(instance.get('associations'), 'C'),
+          addWeightIfExists(instance.get('university'), 'C'),
+        ]
+          .flat()
+          .join(' ')
+      )
+    );
   }
 
   toDTO() {
