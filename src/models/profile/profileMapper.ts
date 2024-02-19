@@ -7,7 +7,7 @@ export class ProfileMapper implements IMapper<IProfile> {
     if (!profile) {
       throw new Error('Profile cannot be null');
     }
-    profile = profile.dataValues;
+
     return {
       primaryEmail: profile.primaryEmail,
       fullName: profile.fullName,
@@ -40,7 +40,7 @@ export class ProfileMapper implements IMapper<IProfile> {
       primaryActivity: profile.primaryActivity,
       secondaryActivity: profile.secondaryActivity,
       thirdActivity: profile.thirdActivity,
-      recommendations: profile.recommendations?.map(this.toBasicProfile),
+      recommendations: profile.recommendations?.map(ProfileMapper.toBasicProfile),
       gender: profile.gender,
       location: profile.location,
       profilePictureUrl: profile.profilePictureUrl,

@@ -20,7 +20,7 @@ export interface ISearchableProfile {
   secondaryActivity?: string;
   thirdActivity?: string;
   phoneNumbers?: string[];
-  languages?: string[];
+  languages?: { lang: string; proficiency: string }[];
   gender?: 'male' | 'female' | 'other';
   state?: string;
   city?: string;
