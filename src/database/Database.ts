@@ -1,11 +1,12 @@
 import config from '@/config';
 import Logger from '@/providers/Logger';
-import { Sequelize, SequelizeOptions } from 'sequelize-typescript';
+import { Sequelize } from 'sequelize-typescript';
 import Container, { Service } from 'typedi';
 import { Umzug, SequelizeStorage } from 'umzug';
 
 import Account from './schemas/Account';
 import Profile, { ProfileRecommendations } from './schemas/Profile';
+import { join } from 'path';
 
 @Service('Database')
 class Database {
@@ -36,11 +37,12 @@ class Database {
       host: connectionSettings.host,
       dialect: connectionSettings.dialect,
       storage: connectionSettings.storage,
-      logging: (msg) => Logger.debug(msg),
+      // logging: (msg) => Logger.debug(msg),
+      logging: undefined,
       port: connectionSettings.port,
       repositoryMode: true,
       models: [Account, Profile, ProfileRecommendations],
-    } as SequelizeOptions);
+    });
     try {
       await this.sequelize.authenticate();
       Container.set('Database', Database._instance);
@@ -49,18 +51,24 @@ class Database {
       Logger.error(error);
       throw error;
     }
+    await this.sequelize.sync();
 
-    if (config.env === 'development') {
-      await this.sequelize.sync();
-    } else {
-      const umzug = new Umzug({
-        migrations: { glob: 'migrations/*.js' },
-        context: this.sequelize.getQueryInterface(),
-        storage: new SequelizeStorage({ sequelize: this.sequelize }),
-        logger: Logger,
-      });
-      umzug.up();
-    }
+    const umzug = new Umzug({
+      migrations: {
+        glob: [
+          'migrations/*.ts',
+          {
+            cwd: join(__dirname, 'src', 'database'),
+            ignore: ['**/*.d.ts', '**/index.ts', '**/index.js'],
+          },
+        ],
+      },
+      context: this.sequelize,
+      storage: new SequelizeStorage({ sequelize: this.sequelize }),
+      logger: Logger,
+    });
+
+    await umzug.up();
   }
 
   public async shutdown() {
