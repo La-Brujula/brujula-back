@@ -31,6 +31,8 @@ export class ProfileMapper implements IMapper<IProfile> {
     }
     return {
       primaryEmail: profile.primaryEmail,
+      firstName: profile.firstName,
+      lastName: profile.lastName,
       fullName: profile.fullName,
       id: profile.id,
       type: profile.type,
@@ -40,7 +42,9 @@ export class ProfileMapper implements IMapper<IProfile> {
       primaryActivity: profile.primaryActivity,
       secondaryActivity: profile.secondaryActivity,
       thirdActivity: profile.thirdActivity,
-      recommendations: profile.recommendations?.map(ProfileMapper.toBasicProfile),
+      recommendations: profile.recommendations?.map(
+        ProfileMapper.toBasicProfile
+      ),
       gender: profile.gender,
       location: profile.location,
       profilePictureUrl: profile.profilePictureUrl,

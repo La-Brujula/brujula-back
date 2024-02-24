@@ -1,4 +1,7 @@
-export interface IProfile extends IBasicProfile, ISearchableProfile, IExtraProfileInformation {}
+export interface IProfile
+  extends IBasicProfile,
+    ISearchableProfile,
+    IExtraProfileInformation {}
 
 export interface IBasicProfile {
   id: string;
@@ -33,10 +36,10 @@ export interface ISearchableProfile {
   remote?: boolean;
   probono?: boolean;
   certifications?: string;
-  headline?: string;
 }
 
 export interface IExtraProfileInformation {
+  headline?: string;
   birthday?: Date;
   externalLinks?: string[];
   whatsapp?: string;

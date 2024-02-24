@@ -26,10 +26,14 @@ class Database {
   public async init(): Promise<any> {
     const connectionSettings = config.database;
     if (!connectionSettings) {
-      throw Error('No connection settings defined for the database in the .env file.');
+      throw Error(
+        'No connection settings defined for the database in the .env file.'
+      );
     }
 
-    Logger.info(`Connecting to ${connectionSettings.dialect}:${connectionSettings.database}`);
+    Logger.info(
+      `Connecting to ${connectionSettings.dialect}:${connectionSettings.database}`
+    );
     this.sequelize = new Sequelize({
       database: connectionSettings.database,
       username: connectionSettings.username,
@@ -37,8 +41,7 @@ class Database {
       host: connectionSettings.host,
       dialect: connectionSettings.dialect,
       storage: connectionSettings.storage,
-      // logging: (msg) => Logger.debug(msg),
-      logging: undefined,
+      logging: (msg) => Logger.debug(msg),
       port: connectionSettings.port,
       repositoryMode: true,
       models: [Account, Profile, ProfileRecommendations],

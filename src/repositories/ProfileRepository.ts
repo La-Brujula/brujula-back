@@ -6,18 +6,31 @@ import {
   ISearchableProfile,
 } from '@/models/profile/profile';
 import Database from '@/database/Database';
-import { Op, Order, Sequelize, Transaction, WhereOptions, cast, col, where } from 'sequelize';
+import {
+  Op,
+  Order,
+  QueryTypes,
+  Sequelize,
+  Transaction,
+  WhereOptions,
+  cast,
+  col,
+  where,
+} from 'sequelize';
 import Profile from '@/database/schemas/Profile';
 import { IPaginationParams } from '@/shared/classes/pagination';
 import { Repository } from 'sequelize-typescript';
 import ProfileErrors from '@/services/profile/ProfileErrors';
+import internal from 'stream';
 
 @Service('ProfileRepository')
 export class ProfileRepository {
+  declare sequelize: Sequelize;
   declare db: Repository<Profile>;
   declare recommendationsInclude: {};
   constructor(@Inject('Database') database: Database) {
     this.db = database.sequelize.getRepository(Profile);
+    this.sequelize = database.sequelize;
 
     this.recommendationsInclude = {
       model: this.db,
@@ -47,7 +60,61 @@ export class ProfileRepository {
   async findById(id: string, transaction?: Transaction) {
     return await this.db.findByPk(id, {
       include: [this.recommendationsInclude],
+      transaction,
     });
+  }
+
+  async textSearch(query: string, limit: number = 10, offset: number = 0) {
+    const greatestStatement = `GREATEST(${(
+      [
+        ['firstName', true],
+        ['lastName', true],
+        ['nickName', true],
+        ['primaryEmail'],
+        ['secondaryEmails'],
+        ['phoneNumbers'],
+        ['primaryActivity'],
+        ['secondaryActivity'],
+        ['thirdActivity'],
+        ['city', true],
+        ['country'],
+        ['postalCode'],
+        ['certifications'],
+        ['associations'],
+        ['university'],
+      ] as [string, boolean | undefined][]
+    ).map(([field, dmeta]) =>
+      [
+        'SIMILARITY(',
+        `${dmeta ? 'DMETAPHONE(' : ''}`,
+        'CAST("Profile"."' + field + '" AS TEXT)',
+        `${dmeta ? ')' : ''}`,
+        ',',
+        `${dmeta ? 'DMETAPHONE(' : ''}`,
+        ':query',
+        `${dmeta ? ')' : ''}`,
+        ')',
+      ].join('')
+    )})`;
+
+    return [
+      0,
+      await this.sequelize.query(
+        `SELECT "Profile".*
+      FROM
+        profiles AS "Profile"
+      WHERE
+      ${greatestStatement} > 0.4
+      ORDER BY
+      ${greatestStatement} DESC
+      LIMIT :limit
+      OFFSET :offset`,
+        {
+          replacements: { query, limit, offset },
+          type: QueryTypes.SELECT,
+        }
+      ),
+    ] as [number, Profile[]];
   }
 
   async find(
@@ -71,13 +138,13 @@ export class ProfileRepository {
     const searchQuery = {
       where: {
         [Op.and]: [
-          // {
-          //   searchable: true,
-          // },
-          query !== undefined && {
-            searchString: { [Op.match]: Sequelize.fn('to_tsquery', 'spanish', query) },
+          {
+            searchable: true,
           },
-          name !== undefined && {
+          !!query && {
+            [Op.gte]: [Sequelize.fn('GREATEST'), 0.4],
+          },
+          !!name && {
             [Op.or]: [
               {
                 firstName: {
@@ -91,14 +158,16 @@ export class ProfileRepository {
               },
             ],
           },
-          activity !== undefined && {
+          !!activity && {
             [Op.or]: [
-              { primaryActivity: activity },
-              { secondaryActivity: activity },
-              { thirdActivity: activity },
+              { primaryActivity: { [Op.like]: activity + '%' } },
+              {
+                secondaryActivity: { [Op.like]: activity + '%' },
+              },
+              { thirdActivity: { [Op.like]: activity + '%' } },
             ],
           },
-          location !== undefined && {
+          !!location && {
             [Op.or]: [
               {
                 city: {
@@ -122,45 +191,61 @@ export class ProfileRepository {
               },
             ],
           },
-          gender !== undefined && { gender },
-          remote !== undefined && { remote },
-          type !== undefined && { type },
-          language !== undefined &&
-            where(cast(col('"Profile"."languages"'), 'text'), Op.iLike, '%' + language + '%'),
-          university !== undefined && {
+          !!gender && { gender },
+          !!remote && { remote },
+          !!type && { type },
+          !!language &&
+            where(
+              cast(col('"Profile"."languages"'), 'text'),
+              Op.iLike,
+              '%' + language + '%'
+            ),
+          !!university && {
             university: {
               [Op.iLike]: '%' + university + '%',
             },
           },
-          probono !== undefined && { probono },
-          associations !== undefined && {
+          !!probono && { probono },
+          !!associations && {
             associations: {
               [Op.iLike]: '%' + associations + '%',
             },
           },
-          certifications !== undefined && {
+          !!certifications && {
             certifications: {
               [Op.iLike]: '%' + certifications + '%',
             },
           },
-          email !== undefined && {
+          !!email && {
             [Op.or]: [
               {
                 primaryEmail: {
                   [Op.iLike]: '%' + email + '%',
                 },
               },
-              where(cast(col('"Profile"."secondayEmail"'), 'text'), Op.iLike, '%' + email + '%'),
+              where(
+                cast(col('"Profile"."secondaryEmails"'), 'text'),
+                Op.iLike,
+                '%' + email + '%'
+              ),
             ],
           },
         ].filter((v) => v !== false) as WhereOptions<Profile>,
       },
       include: [this.recommendationsInclude],
       order: [
+        [
+          Sequelize.fn(
+            'ts_rank',
+            '"Profile"."searchString"',
+            Sequelize.fn('websearch_to_tsquery', 'spanish', query)
+          ),
+          'DESC',
+        ],
         ['subscriber', 'DESC'],
         ['recommendationsCount', 'DESC'],
         ['firstName', 'DESC'],
-      ] as Order,
+      ].filter((a) => !!a) as Order,
     };
     return [
       await this.db.count({ ...searchQuery, attributes: [] }),
@@ -168,7 +253,10 @@ export class ProfileRepository {
     ];
   }
 
-  async create(userInput: IProfileCreationQuery, transaction?: Transaction): Promise<Profile> {
+  async create(
+    userInput: IProfileCreationQuery,
+    transaction?: Transaction
+  ): Promise<Profile> {
     const newProfile = {
       primaryEmail: userInput.email,
       type: userInput.type,

@@ -19,7 +19,8 @@ import Database from '@/database/Database';
 export default class ProfileService {
   declare tokenSecret: string;
   constructor(
-    @Inject('ProfileRepository') private readonly profileRepository: ProfileRepository,
+    @Inject('ProfileRepository')
+    private readonly profileRepository: ProfileRepository,
     @Inject('Database') private readonly database: Database
   ) {}
 
@@ -36,13 +37,18 @@ export default class ProfileService {
   ): Promise<ServiceResponse<IProfileDTO>> {
     Logger.debug('ProfileService | createProfile | Start');
     return this.database.sequelize.transaction(async (transaction) => {
-      Logger.debug('ProfileService | createProfile | Checking if profile already exists');
+      Logger.debug(
+        'ProfileService | createProfile | Checking if profile already exists'
+      );
       if (await this.profileExistsByEmail(newAccount.email)) {
         throw ProfileErrors.existingProfile;
       }
 
       Logger.debug('ProfileService | createProfile | Creating profile');
-      const profileRecord = await this.profileRepository.create(newAccount, transaction);
+      const profileRecord = await this.profileRepository.create(
+        newAccount,
+        transaction
+      );
       Logger.debug('ProfileService | createProfile | Created profile');
 
       const profile = ProfileMapper.toDto(profileRecord);
@@ -58,10 +64,21 @@ export default class ProfileService {
       limit: parameters.limit,
       offset: parameters.offset,
     };
-    const [total_profiles, dbProfiles] = await this.profileRepository.find(parameters, pagination);
+    const [total_profiles, dbProfiles] =
+      parameters.query !== undefined
+        ? await this.profileRepository.textSearch(
+            parameters.query,
+            pagination.limit,
+            pagination.offset
+          )
+        : await this.profileRepository.find(parameters, pagination);
     const profiles = dbProfiles.map(ProfileMapper.toProfile);
     Logger.debug('ProfileService | Search | Got results');
-    return ServiceResponse.paginate(profiles, total_profiles, parameters.offset);
+    return ServiceResponse.paginate(
+      profiles,
+      total_profiles,
+      parameters.offset
+    );
   }
 
   public async recommend(
@@ -71,12 +88,19 @@ export default class ProfileService {
     Logger.debug('ProfileService | GetFullProfile | Started');
     return this.database.sequelize.transaction(async (transaction) => {
       const recommendedProfile = await this.getProfileOrThrow(recommendationId);
-      const recommendatorProfile = await this.getProfileOrThrow(recommendedById);
+      const recommendatorProfile =
+        await this.getProfileOrThrow(recommendedById);
 
-      if (await recommendedProfile.$has('recommendations', recommendatorProfile, { transaction })) {
+      if (
+        await recommendedProfile.$has('recommendations', recommendatorProfile, {
+          transaction,
+        })
+      ) {
         throw ProfileErrors.alreadyRecommended;
       }
-      await recommendedProfile.$add('recommendations', recommendatorProfile, { transaction });
+      await recommendedProfile.$add('recommendations', recommendatorProfile, {
+        transaction,
+      });
       Logger.debug('ProfileService | GetFullProfile | Finished');
       await recommendedProfile.save({ transaction });
       return ServiceResponse.ok(recommendedProfile, 201);
@@ -90,21 +114,30 @@ export default class ProfileService {
     Logger.debug('ProfileService | GetFullProfile | Started');
     return this.database.sequelize.transaction(async (transaction) => {
       const recommendedProfile = await this.getProfileOrThrow(recommendationId);
-      const recommendatorProfile = await this.getProfileOrThrow(recommendedById);
+      const recommendatorProfile =
+        await this.getProfileOrThrow(recommendedById);
       if (
-        !(await recommendedProfile.$has('recommendations', recommendatorProfile, { transaction }))
+        !(await recommendedProfile.$has(
+          'recommendations',
+          recommendatorProfile,
+          { transaction }
+        ))
       ) {
         throw ProfileErrors.notRecommended;
       }
 
-      recommendedProfile.$remove('recommendations', recommendatorProfile, { transaction });
+      recommendedProfile.$remove('recommendations', recommendatorProfile, {
+        transaction,
+      });
       await recommendedProfile.save({ transaction });
       Logger.debug('ProfileService | GetFullProfile | Finished');
       return ServiceResponse.ok(recommendedProfile);
     });
   }
 
-  public async getFullProfile(id: string): Promise<ServiceResponse<IProfileDTO>> {
+  public async getFullProfile(
+    id: string
+  ): Promise<ServiceResponse<IProfileDTO>> {
     Logger.debug('ProfileService | GetFullProfile | Started');
 
     const profileDb = await this.profileRepository.findById(id);
