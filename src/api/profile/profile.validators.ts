@@ -130,4 +130,6 @@ export const validateProfileUpdate = [
     .isLength({ min: 1, max: 512 }),
   body('headline').optional().trim().isString().isLength({ min: 1, max: 60 }),
   body('birthday').optional().trim().isISO8601(),
+  body('profilePictureUrl').optional().trim().isURL(),
+  body('headerPictureUrl').optional().trim().isURL(),
 ];

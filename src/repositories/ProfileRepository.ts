@@ -7,21 +7,22 @@ import {
 } from '@/models/profile/profile';
 import Database from '@/database/Database';
 import {
+  FindAndCountOptions,
   Op,
   Order,
-  QueryTypes,
   Sequelize,
   Transaction,
   WhereOptions,
   cast,
   col,
+  fn,
+  literal,
   where,
 } from 'sequelize';
 import Profile from '@/database/schemas/Profile';
 import { IPaginationParams } from '@/shared/classes/pagination';
 import { Repository } from 'sequelize-typescript';
 import ProfileErrors from '@/services/profile/ProfileErrors';
-import internal from 'stream';
 
 @Service('ProfileRepository')
 export class ProfileRepository {
@@ -64,57 +65,20 @@ export class ProfileRepository {
     });
   }
 
-  async textSearch(query: string, limit: number = 10, offset: number = 0) {
-    const greatestStatement = `GREATEST(${(
-      [
-        ['firstName', true],
-        ['lastName', true],
-        ['nickName', true],
-        ['primaryEmail'],
-        ['secondaryEmails'],
-        ['phoneNumbers'],
-        ['primaryActivity'],
-        ['secondaryActivity'],
-        ['thirdActivity'],
-        ['city', true],
-        ['country'],
-        ['postalCode'],
-        ['certifications'],
-        ['associations'],
-        ['university'],
-      ] as [string, boolean | undefined][]
-    ).map(([field, dmeta]) =>
-      [
-        'SIMILARITY(',
-        `${dmeta ? 'DMETAPHONE(' : ''}`,
-        'CAST("Profile"."' + field + '" AS TEXT)',
-        `${dmeta ? ')' : ''}`,
-        ',',
-        `${dmeta ? 'DMETAPHONE(' : ''}`,
-        ':query',
-        `${dmeta ? ')' : ''}`,
-        ')',
-      ].join('')
-    )})`;
+  concatColumns(...columns: string[]) {
+    return fn(
+      'CONCAT',
+      ...columns.flatMap((column) => [' ', cast(col(column), 'text')]).slice(1)
+    );
+  }
 
-    return [
-      0,
-      await this.sequelize.query(
-        `SELECT "Profile".*
-      FROM
-        profiles AS "Profile"
-      WHERE
-      ${greatestStatement} > 0.4
-      ORDER BY
-      ${greatestStatement} DESC
-      LIMIT :limit
-      OFFSET :offset`,
-        {
-          replacements: { query, limit, offset },
-          type: QueryTypes.SELECT,
-        }
-      ),
-    ] as [number, Profile[]];
+  buildTextSearchQuery(query: string) {
+    return fn(
+      'GREATEST',
+      fn('SIMILARITY', this.concatColumns('firstName', 'lastName'), query),
+      fn('SIMILARITY', col('nickName'), query),
+      fn('SIMILARITY', this.concatColumns('city', 'state', 'country'), query)
+    );
   }
 
   async find(
@@ -141,62 +105,34 @@ export class ProfileRepository {
           {
             searchable: true,
           },
-          !!query && {
-            [Op.gte]: [Sequelize.fn('GREATEST'), 0.4],
-          },
-          !!name && {
-            [Op.or]: [
-              {
-                firstName: {
-                  [Op.iLike]: '%' + name + '%',
-                },
-              },
-              {
-                lastName: {
-                  [Op.iLike]: '%' + name + '%',
-                },
-              },
-            ],
-          },
+          !!query && where(this.buildTextSearchQuery(query), Op.gte, 0.3),
+          !!name &&
+            where(
+              this.concatColumns('firstName', 'lastName'),
+              Op.iLike,
+              `%${name}%`
+            ),
           !!activity && {
             [Op.or]: [
-              { primaryActivity: { [Op.like]: activity + '%' } },
+              { primaryActivity: { [Op.iLike]: activity + '%' } },
               {
-                secondaryActivity: { [Op.like]: activity + '%' },
+                secondaryActivity: { [Op.iLike]: activity + '%' },
               },
-              { thirdActivity: { [Op.like]: activity + '%' } },
+              { thirdActivity: { [Op.iLike]: activity + '%' } },
             ],
           },
-          !!location && {
-            [Op.or]: [
-              {
-                city: {
-                  [Op.iLike]: '%' + location + '%',
-                },
-              },
-              {
-                country: {
-                  [Op.iLike]: '%' + location + '%',
-                },
-              },
-              {
-                state: {
-                  [Op.iLike]: '%' + location + '%',
-                },
-              },
-              {
-                postalCode: {
-                  [Op.iLike]: '%' + location + '%',
-                },
-              },
-            ],
-          },
+          !!location &&
+            where(
+              this.concatColumns('city', 'country', 'stat'),
+              Op.iLike,
+              `%${location}%`
+            ),
           !!gender && { gender },
           !!remote && { remote },
           !!type && { type },
           !!language &&
             where(
-              cast(col('"Profile"."languages"'), 'text'),
+              cast(this.sequelize.col('languages'), 'text'),
               Op.iLike,
               '%' + language + '%'
             ),
@@ -216,40 +152,41 @@ export class ProfileRepository {
               [Op.iLike]: '%' + certifications + '%',
             },
           },
-          !!email && {
-            [Op.or]: [
-              {
-                primaryEmail: {
-                  [Op.iLike]: '%' + email + '%',
-                },
-              },
-              where(
-                cast(col('"Profile"."secondaryEmails"'), 'text'),
-                Op.iLike,
-                '%' + email + '%'
-              ),
-            ],
-          },
+          !!email &&
+            where(
+              this.concatColumns('primaryEmail', 'secondaryEmails'),
+              Op.iLike,
+              '%' + email + '%'
+            ),
+          ,
         ].filter((v) => v !== false) as WhereOptions<Profile>,
       },
-      include: [this.recommendationsInclude],
-      order: [
-        [
-          Sequelize.fn(
-            'ts_rank',
-            '"Profile"."searchString"',
-            Sequelize.fn('websearch_to_tsquery', 'spanish', query)
-          ),
-          'DESC',
-        ],
-        ['subscriber', 'DESC'],
-        ['recommendationsCount', 'DESC'],
-        ['firstName', 'DESC'],
-      ].filter((a) => !!a) as Order,
-    };
+    } as FindAndCountOptions;
     return [
-      await this.db.count({ ...searchQuery, attributes: [] }),
-      await this.db.findAll({ ...searchQuery, limit, offset }),
+      await this.db.count({
+        ...searchQuery,
+        attributes: [],
+      }),
+      await this.db.findAll({
+        ...searchQuery,
+        order: [
+          !!query && [this.buildTextSearchQuery(query), 'DESC'],
+          ['subscriber', 'DESC'],
+          ['recommendationsCount', 'DESC'],
+          !!activity && [
+            literal(`CASE
+        WHEN "Profile"."primaryActivity" ILIKE ${this.sequelize.escape(activity + '%')} THEN 3
+        WHEN "Profile"."secondaryActivity" ILIKE ${this.sequelize.escape(activity + '%')} THEN 2
+        WHEN "Profile"."thirdActivity" ILIKE ${this.sequelize.escape(activity + '%')} THEN 1
+        ELSE 0
+        END`),
+            'DESC',
+          ],
+          ['firstName', 'DESC'],
+        ].filter((a) => !!a) as Order,
+        limit,
+        offset,
+      }),
     ];
   }
 
