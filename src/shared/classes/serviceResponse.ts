@@ -25,11 +25,15 @@ export class ServiceResponse<T> {
     offset?: number
   ) {
     if (isSuccess && errorMessage) {
-      throw new Error("InvalidOperation: A result can't be successful if it contains an error");
+      throw new Error(
+        "InvalidOperation: A result can't be successful if it contains an error"
+      );
     }
 
     if (!isSuccess && !errorMessage) {
-      throw new Error('InvalidOperation: A failing result needs to contain an error message');
+      throw new Error(
+        'InvalidOperation: A failing result needs to contain an error message'
+      );
     }
 
     this.isSuccess = isSuccess;
@@ -40,7 +44,11 @@ export class ServiceResponse<T> {
     this.entity = entity;
     this.errorCode = errorCode;
 
-    if (totalItems !== undefined && limit !== undefined && offset !== undefined) {
+    if (
+      totalItems !== undefined &&
+      limit !== undefined &&
+      offset !== undefined
+    ) {
       this.meta = {
         total: totalItems,
         limit: limit,
@@ -58,7 +66,11 @@ export class ServiceResponse<T> {
     return new ServiceResponse<U>(true, status, undefined, value, undefined);
   }
 
-  public static paginate<U>(items: U[], totalItems: number, offset: number): ServiceResponse<U[]> {
+  public static paginate<U>(
+    items: U[],
+    totalItems: number,
+    offset: number
+  ): ServiceResponse<U[]> {
     return new ServiceResponse<U[]>(
       true,
       200,
@@ -72,7 +84,13 @@ export class ServiceResponse<T> {
   }
 
   public static fail<U>(error: Error, errorCode?: string): ServiceResponse<U> {
-    return new ServiceResponse<U>(false, 500, error.message, undefined, errorCode);
+    return new ServiceResponse<U>(
+      false,
+      500,
+      error.message,
+      undefined,
+      errorCode
+    );
   }
 
   public getValue(): T | T[] | null {

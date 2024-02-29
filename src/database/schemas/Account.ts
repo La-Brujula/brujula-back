@@ -1,4 +1,7 @@
-import { IAccount, AccountRoleTypes } from '@/models/authentication/authentication';
+import {
+  IAccount,
+  AccountRoleTypes,
+} from '@/models/authentication/authentication';
 import Profile from './Profile';
 import {
   BelongsTo,
@@ -12,6 +15,7 @@ import {
   Model,
   PrimaryKey,
   Table,
+  Unique,
   UpdatedAt,
 } from 'sequelize-typescript';
 
@@ -36,6 +40,7 @@ export default class Account extends Model implements IAccount {
   @Column passwordResetPin?: string;
 
   @ForeignKey(() => Profile)
+  @Unique
   @Column
   ProfileId!: string;
 

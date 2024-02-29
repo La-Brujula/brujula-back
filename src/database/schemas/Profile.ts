@@ -2,6 +2,7 @@ import { IProfile } from '@/models/profile/profile';
 import {
   AllowNull,
   BeforeUpdate,
+  BelongsTo,
   BelongsToMany,
   Column,
   CreatedAt,
@@ -17,10 +18,12 @@ import {
   Model,
   PrimaryKey,
   Table,
+  Unique,
   UpdatedAt,
 } from 'sequelize-typescript';
 import { UUIDV4 } from 'sequelize';
 import { ProfileMapper } from '@/models/profile/profileMapper';
+import Account from './Account';
 
 const ACTIVITY_REGEX = /\d{3}-\d{2}/;
 
@@ -33,6 +36,7 @@ export default class Profile extends Model implements IProfile {
   id!: string;
 
   @IsEmail
+  @Unique
   @Column
   primaryEmail!: string;
 
@@ -54,12 +58,12 @@ export default class Profile extends Model implements IProfile {
   @Column firstName?: string;
   @Column lastName?: string;
 
-  @Column(DataType.VIRTUAL(DataType.STRING, ['firstName', 'lastName']))
+  @Column(DataType.VIRTUAL(DataType.STRING, ['firstName']))
   get fullName(): string | undefined {
     const firstName = this.getDataValue('firstName'),
       lastName = this.getDataValue('lastName');
-    if (!firstName || !lastName) return undefined;
-    return `${firstName} ${lastName}`;
+    if (!firstName && !lastName) return undefined;
+    return [firstName, lastName].filter((a) => !!a).join(' ');
   }
 
   @Column nickName?: string;
@@ -119,7 +123,14 @@ export default class Profile extends Model implements IProfile {
   @Column country?: string;
   @Column postalCode?: string;
 
-  @Column(DataType.VIRTUAL(DataType.STRING, ['city', 'state', 'country', 'postalCode']))
+  @Column(
+    DataType.VIRTUAL(DataType.STRING, [
+      'city',
+      'state',
+      'country',
+      'postalCode',
+    ])
+  )
   get location(): string {
     return [
       this.get('city'),
@@ -156,9 +167,15 @@ export default class Profile extends Model implements IProfile {
   @Column(DataType.ENUM('local', 'state', 'national', 'international'))
   workRadius?: 'local' | 'state' | 'national' | 'international';
 
-  @Column(DataType.TSVECTOR) searchString?: string;
+  @Column(DataType.TEXT)
+  searchString?: string;
 
-  @BelongsToMany(() => Profile, () => ProfileRecommendations, 'profileId', 'recommendedBy')
+  @BelongsToMany(
+    () => Profile,
+    () => ProfileRecommendations,
+    'profileId',
+    'recommendedBy'
+  )
   recommendations!: Profile[];
 
   @CreatedAt
@@ -170,36 +187,33 @@ export default class Profile extends Model implements IProfile {
 
   @BeforeUpdate
   static async updateVector(instance: Profile) {
-    function addWeightIfExists(v: string | undefined | null, weight: 'A' | 'B' | 'C'): string[] {
-      if (!v) return [];
-      return v.split(' ').map((i) => i + ':' + weight);
-    }
-    instance.setDataValue('recommendationsCount', await instance.$count('recommendations'));
+    instance.setDataValue(
+      'recommendationsCount',
+      await instance.$count('recommendations')
+    );
     instance.setDataValue(
       'searchable',
-      ['primaryActivity', 'firstName', 'gender', 'state'].every((p) => !!instance.get(p))
+      ['primaryActivity', 'firstName', 'gender'].every((p) => !!instance.get(p))
     );
     instance.setDataValue(
       'searchString',
-      instance.sequelize.fn(
-        'to_tsvector',
-        'spanish',
-        [
-          instance
-            .get('fullName')
-            ?.split(' ')
-            .map((v: string) => v + ':A'),
-          addWeightIfExists(instance.get('primaryActivity'), 'A'),
-          addWeightIfExists(instance.get('secondaryActivity'), 'B'),
-          addWeightIfExists(instance.get('thirdActivity'), 'B'),
-          addWeightIfExists(instance.get('location'), 'B'),
-          addWeightIfExists(instance.get('certifications'), 'C'),
-          addWeightIfExists(instance.get('associations'), 'C'),
-          addWeightIfExists(instance.get('university'), 'C'),
-        ]
-          .flat()
-          .join(' ')
-      )
+      [
+        instance.get('fullName'),
+        instance.get('nickname'),
+        instance.get('primaryEmail'),
+        instance.get('secondaryEmails'),
+        instance.get('phoneNumbers'),
+        instance.get('primaryActivity'),
+        instance.get('secondaryActivity'),
+        instance.get('thirdActivity'),
+        instance.get('location'),
+        instance.get('certifications'),
+        instance.get('associations'),
+        instance.get('university'),
+      ]
+        .flat()
+        .filter((a) => !!a)
+        .join(' ')
     );
   }
 
@@ -208,7 +222,10 @@ export default class Profile extends Model implements IProfile {
   }
 }
 
-@Table({ tableName: 'profile_recommendations', modelName: 'ProfileRecommendations' })
+@Table({
+  tableName: 'profile_recommendations',
+  modelName: 'ProfileRecommendations',
+})
 export class ProfileRecommendations extends Model {
   @ForeignKey(() => Profile)
   @Column

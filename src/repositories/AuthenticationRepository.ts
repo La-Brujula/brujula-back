@@ -23,22 +23,17 @@ export class AccountRepository {
     return this.accountRepo.findOne({ where: { email } });
   }
 
-  async create(userInput: IAuthenticationRequestBody): Promise<IAccount> {
-    return await this.accountRepo.create(
-      {
-        email: userInput.email,
-        password: userInput.password,
-        role: 'user',
-        passwordRecoveryAttempts: 0,
-        profile: {
-          primaryEmail: userInput.email,
-          type: userInput.type || 'fisica',
-        },
-      },
-      {
-        include: [this.profileRepo],
-      }
-    );
+  async create(
+    userInput: IAuthenticationRequestBody,
+    profile: Profile | null
+  ): Promise<IAccount> {
+    return this.accountRepo.create({
+      email: userInput.email,
+      password: userInput.password,
+      role: 'user',
+      passwordRecoveryAttempts: 0,
+      ProfileId: profile?.id,
+    });
   }
 
   async delete(email: string): Promise<boolean> {

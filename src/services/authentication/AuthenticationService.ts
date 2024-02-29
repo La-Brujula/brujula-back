@@ -13,17 +13,23 @@ import Logger from '@/providers/Logger';
 import { generateToken, hashPassword } from '@/shared/utils/jwtUtils';
 import { randomBytes } from 'crypto';
 import { sendEmail } from '@/providers/Emailer';
+import { ProfileRepository } from '@/repositories/ProfileRepository';
 
 @Service()
 export default class AuthenticationService {
   declare tokenSecret: string;
   constructor(
-    @Inject('AccountRepository') private readonly authenticationRepository: AccountRepository
+    @Inject('AccountRepository')
+    private readonly authenticationRepository: AccountRepository,
+    @Inject('ProfileRepository')
+    private readonly profileRepository: ProfileRepository
   ) {
     this.tokenSecret = config.application.jwtSecret;
 
     if (!this.tokenSecret || this.tokenSecret.length == 0) {
-      throw new Error('AccountService | generateToken | JWT | was not provided in configuration');
+      throw new Error(
+        'AccountService | generateToken | JWT | was not provided in configuration'
+      );
     }
   }
 
@@ -31,7 +37,9 @@ export default class AuthenticationService {
     newAccount: IAuthenticationRequestBody
   ): Promise<ServiceResponse<IAuthenticationResponseBody>> {
     Logger.debug('AccountService | addAccount | Start');
-    Logger.debug('AccountService | addAccount | Checking if account already exists');
+    Logger.debug(
+      'AccountService | addAccount | Checking if account already exists'
+    );
     if (await this.userExists(newAccount.email)) {
       throw AuthenticationErrors.existingAccount;
     }
@@ -39,12 +47,17 @@ export default class AuthenticationService {
     Logger.debug('AccountService | addAccount | Hashing password');
     const hashedPassword = hashPassword(newAccount.email, newAccount.password);
 
+    const profile = await this.getProfileIdIfExists(newAccount.email);
+
     Logger.debug('AccountService | addAccount | Creating account');
-    const accountRecord = await this.authenticationRepository.create({
-      email: newAccount.email,
-      password: hashedPassword,
-      type: newAccount.type,
-    });
+    const accountRecord = await this.authenticationRepository.create(
+      {
+        email: newAccount.email,
+        password: hashedPassword,
+        type: newAccount.type,
+      },
+      profile
+    );
     Logger.debug('AccountService | addAccount | Created account');
 
     const account: IAccountDTO = AccountMapper.toDto(accountRecord);
@@ -59,7 +72,9 @@ export default class AuthenticationService {
     userInput: IAuthenticationRequestBody
   ): Promise<ServiceResponse<IAuthenticationResponseBody>> {
     Logger.debug(`AccountService | signIn | Started`);
-    const accountRecord = await this.authenticationRepository.findByEmail(userInput.email);
+    const accountRecord = await this.authenticationRepository.findByEmail(
+      userInput.email
+    );
     if (!accountRecord) {
       throw AuthenticationErrors.accountDoesNotExist;
     }
@@ -79,7 +94,9 @@ export default class AuthenticationService {
     return ServiceResponse.ok({ account, token });
   }
 
-  public async deleteAccount(accountInfo: IAccountDTO): Promise<ServiceResponse<boolean>> {
+  public async deleteAccount(
+    accountInfo: IAccountDTO
+  ): Promise<ServiceResponse<boolean>> {
     Logger.debug('AccountService | deleteAccount | Start');
     Logger.debug('AccountService | deleteAccount | Checking if account exists');
     if (!(await this.userExists(accountInfo.email))) {
@@ -87,7 +104,9 @@ export default class AuthenticationService {
     }
 
     Logger.debug('AccountService | deleteAccount | Deleting account');
-    const accountDeleted = await this.authenticationRepository.delete(accountInfo.email);
+    const accountDeleted = await this.authenticationRepository.delete(
+      accountInfo.email
+    );
     if (!accountDeleted) {
       throw AuthenticationErrors.couldNotDeleteAccount;
     }
@@ -96,10 +115,13 @@ export default class AuthenticationService {
     return new ServiceResponse(accountDeleted, 202);
   }
 
-  public async getUser(userEmail: string): Promise<ServiceResponse<IAccountDTO>> {
+  public async getUser(
+    userEmail: string
+  ): Promise<ServiceResponse<IAccountDTO>> {
     Logger.debug(`AccountService | getUser | Started`);
     Logger.debug('AccountService | getUser | Getting the user by email');
-    const accountRecord = await this.authenticationRepository.findByEmail(userEmail);
+    const accountRecord =
+      await this.authenticationRepository.findByEmail(userEmail);
     if (!accountRecord) {
       throw AuthenticationErrors.accountDoesNotExist;
     }
@@ -116,7 +138,9 @@ export default class AuthenticationService {
 
     if (!user) throw AuthenticationErrors.accountDoesNotExist;
 
-    Logger.debug('AccountService | createPasswordResetPin | Checking a new pin can be created');
+    Logger.debug(
+      'AccountService | createPasswordResetPin | Checking a new pin can be created'
+    );
     if (user.passwordRecoveryAttempts == 3)
       throw AuthenticationErrors.exceededPasswordResetAttempts;
 
@@ -126,7 +150,9 @@ export default class AuthenticationService {
     Logger.debug('AccountService | createPasswordResetPin | Updating user');
     await this.authenticationRepository.update(email, {
       passwordResetPin: pin,
-      passwordResetPinExpirationTime: new Date(new Date().valueOf() + 15 * 60 * 1000),
+      passwordResetPinExpirationTime: new Date(
+        new Date().valueOf() + 15 * 60 * 1000
+      ),
       passwordRecoveryAttempts: user.passwordRecoveryAttempts + 1,
     });
 
@@ -145,6 +171,10 @@ export default class AuthenticationService {
     return !!user;
   }
 
+  private async getProfileIdIfExists(userEmail: string) {
+    return await this.profileRepository.findByEmail(userEmail);
+  }
+
   public async changePassword(pin: string, password: string, email: string) {
     Logger.debug('AccountService | changePassword | Started');
     const user = await this.authenticationRepository.findByEmail(email);
@@ -160,7 +190,9 @@ export default class AuthenticationService {
       throw AuthenticationErrors.wrongPasswordResetToken;
     }
 
-    Logger.debug("AccountService | changePassword | Checking pin isn't expired");
+    Logger.debug(
+      "AccountService | changePassword | Checking pin isn't expired"
+    );
     if (user.passwordResetPinExpirationTime! < new Date()) {
       throw AuthenticationErrors.passwordResetTokenExpired;
     }

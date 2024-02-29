@@ -3,7 +3,11 @@ import jwt from 'jsonwebtoken';
 import crypto from 'crypto';
 
 export function hashPassword(username: string, password: string) {
-  return crypto.createHash('sha256').update(username).update(password).digest('hex');
+  return crypto
+    .createHash('sha256')
+    .update(username)
+    .update(password)
+    .digest('hex');
 }
 
 export function generateToken(user: IAccount, tokenSecret: string): string {
@@ -15,7 +19,7 @@ export function generateToken(user: IAccount, tokenSecret: string): string {
     } as IJwtToken,
     tokenSecret,
     {
-      expiresIn: '1h',
+      expiresIn: '7d',
     }
   );
   return token;

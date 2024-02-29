@@ -44,12 +44,15 @@ export default class AuthenticationController {
     return sendResponse(res, accountsDeleteAccountResponse);
   });
 
-  public sendPasswordReset = handleAsync(async (req: Request, res: Response) => {
-    const { email } = req.body;
-    const accountsPasswordResetResponse = await this.authService.createPasswordResetPin(email);
+  public sendPasswordReset = handleAsync(
+    async (req: Request, res: Response) => {
+      const { email } = req.body;
+      const accountsPasswordResetResponse =
+        await this.authService.createPasswordResetPin(email);
 
-    return sendResponse(res, accountsPasswordResetResponse);
-  });
+      return sendResponse(res, accountsPasswordResetResponse);
+    }
+  );
 
   public resetPassword = handleAsync(async (req: Request, res: Response) => {
     const { email, password, code } = req.body;
@@ -64,9 +67,8 @@ export default class AuthenticationController {
 
   public me = handleAsync(async (req: Request, res: Response) => {
     Logger.debug('AuthenticationController | Me | Start');
-    const accountMeResponse: ServiceResponse<IAccountDTO> = await this.authService.getUser(
-      req.user.email
-    );
+    const accountMeResponse: ServiceResponse<IAccountDTO> =
+      await this.authService.getUser(req.user.email);
     Logger.debug('AuthenticationController | Me | End');
     return sendResponse(res, accountMeResponse);
   });

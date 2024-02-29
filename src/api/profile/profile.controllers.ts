@@ -13,7 +13,9 @@ import { Inject, Service } from 'typedi';
 
 @Service()
 export default class ProfileController {
-  constructor(@Inject('ProfileService') private readonly profileService: ProfileService) {}
+  constructor(
+    @Inject('ProfileService') private readonly profileService: ProfileService
+  ) {}
 
   public search = handleAsync(async (req: Request, res: Response) => {
     const query: IProfileSearchQuery & IPaginationParams = req.body;
@@ -23,7 +25,8 @@ export default class ProfileController {
 
   public updateMe = handleAsync(async (req: Request, res: Response) => {
     const { ProfileId } = req.user;
-    const newProfileInfo: ISearchableProfile & IExtraProfileInformation = req.body;
+    const newProfileInfo: ISearchableProfile & IExtraProfileInformation =
+      req.body;
     const accountsSignUpResponse = await this.profileService.updateProfile(
       ProfileId,
       newProfileInfo
@@ -33,12 +36,15 @@ export default class ProfileController {
 
   public create = handleAsync(async (req: Request, res: Response) => {
     const newProfileInfo: IProfileCreationQuery = req.body;
-    const accountsSignUpResponse = await this.profileService.createProfile(newProfileInfo);
+    const accountsSignUpResponse =
+      await this.profileService.createProfile(newProfileInfo);
     return sendResponse(res, accountsSignUpResponse);
   });
 
   public getUserProfile = handleAsync(async (req: Request, res: Response) => {
-    const profileMeResponse = await this.profileService.getFullProfile(req.user.ProfileId);
+    const profileMeResponse = await this.profileService.getFullProfile(
+      req.user.ProfileId
+    );
     return sendResponse(res, profileMeResponse);
   });
 
@@ -50,15 +56,21 @@ export default class ProfileController {
     return sendResponse(res, profileMeResponse);
   });
 
-  public revokeRecommendation = handleAsync(async (req: Request, res: Response) => {
-    const profileMeResponse = await this.profileService.revokeRecommendation(
-      req.user.ProfileId,
-      req.params.profileId
-    );
-    return sendResponse(res, profileMeResponse);
-  });
+  public revokeRecommendation = handleAsync(
+    async (req: Request, res: Response) => {
+      const profileMeResponse = await this.profileService.revokeRecommendation(
+        req.user.ProfileId,
+        req.params.profileId
+      );
+      return sendResponse(res, profileMeResponse);
+    }
+  );
 
-  public attachParamToUser = async (req: Request, _: Response, next: NextFunction) => {
+  public attachParamToUser = async (
+    req: Request,
+    _: Response,
+    next: NextFunction
+  ) => {
     if (!req.user) {
       req.user = { email: '', role: 'user', ProfileId: req.params.profileId };
       return next();
