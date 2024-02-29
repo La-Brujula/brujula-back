@@ -13,7 +13,8 @@ import { handleAsync } from '@/shared/utils/sendError';
 import isAdmin from '@/shared/middleware/isAdmin';
 
 const notSelf = handleAsync((req, _, next) => {
-  if (req.user.ProfileId == req.params.profileId) throw Error("Can't affect self");
+  if (req.user.ProfileId == req.params.profileId)
+    throw Error("Can't affect self");
   return next();
 });
 
@@ -30,13 +31,22 @@ export default (app: Router) => {
     handleValidationErrors,
     profileController.search
   );
-  router.post('/', validateProfileCreation, handleValidationErrors, profileController.create);
+  router.post(
+    '/',
+    validateProfileCreation,
+    handleValidationErrors,
+    profileController.create
+  );
 
   router
     .route('/me')
     .all(authenticateRequest)
     .get(profileController.getUserProfile)
-    .patch(validateProfileUpdate, handleValidationErrors, profileController.updateMe);
+    .patch(
+      validateProfileUpdate,
+      handleValidationErrors,
+      profileController.updateMe
+    );
 
   router
     .route('/:profileId/recommendations')

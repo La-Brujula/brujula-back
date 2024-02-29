@@ -27,7 +27,8 @@ export default {
 
   images: {
     imagesPath: process.env.IMAGES_PATH || './public',
-    imagesBaseURL: process.env.IMAGES_BASE_URL || 'https://img.labrujula.com.mx',
+    imagesBaseURL:
+      process.env.IMAGES_BASE_URL || 'https://img.labrujula.com.mx',
   },
 
   database: {

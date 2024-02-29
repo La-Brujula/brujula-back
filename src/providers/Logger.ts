@@ -1,7 +1,17 @@
 import winston from 'winston';
 import config from '@/config';
 import { format } from 'winston';
-const { combine, json, timestamp, colorize, errors, splat, align, printf, uncolorize } = format;
+const {
+  combine,
+  json,
+  timestamp,
+  colorize,
+  errors,
+  splat,
+  align,
+  printf,
+  uncolorize,
+} = format;
 
 const Logger = winston.createLogger({
   level: config.logs.level,

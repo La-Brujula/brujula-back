@@ -47,5 +47,8 @@ export default (app: Router) => {
 
   router.use(authenticateRequest);
 
-  router.route('/me').get(authController.me).delete(authController.deleteAccount);
+  router
+    .route('/me')
+    .get(authController.me)
+    .delete(authController.deleteAccount);
 };
