@@ -36,7 +36,6 @@ export default class Profile extends Model implements IProfile {
   id!: string;
 
   @IsEmail
-  @Unique
   @Column
   primaryEmail!: string;
 

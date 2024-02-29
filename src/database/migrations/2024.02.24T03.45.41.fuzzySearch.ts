@@ -11,11 +11,11 @@ export const up: Migration = async ({ context: sequelize }) => {
     allowNull: false,
     type: 'varchar(255)',
   });
-  sequelize.getQueryInterface().addConstraint('profiles', {
-    type: 'unique',
-    fields: ['primaryEmail'],
-    name: 'profiles_primaryEmail_unique',
-  });
+  // sequelize.getQueryInterface().addConstraint('profiles', {
+  //   type: 'unique',
+  //   fields: ['primaryEmail'],
+  //   name: 'profiles_primaryEmail_unique',
+  // });
 };
 export const down: Migration = async ({ context: sequelize }) => {
   sequelize.query('DROP EXTENSION fuzzystrmatch;');

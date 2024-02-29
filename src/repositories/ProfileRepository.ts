@@ -123,7 +123,7 @@ export class ProfileRepository {
           },
           !!location &&
             where(
-              this.concatColumns('city', 'country', 'stat'),
+              this.concatColumns('city', 'country', 'state'),
               Op.iLike,
               `%${location}%`
             ),

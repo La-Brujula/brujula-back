@@ -40,7 +40,6 @@ export default class Account extends Model implements IAccount {
   @Column passwordResetPin?: string;
 
   @ForeignKey(() => Profile)
-  @Unique
   @Column
   ProfileId!: string;
 

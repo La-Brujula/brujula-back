@@ -11,7 +11,8 @@
     "start": "node dist/main.js",
     "build": "tsc --project tsconfig.json && tsc-alias -p tsconfig.json",
     "dev": "ts-node-dev -r tsconfig-paths/register --transpile-only --respawn --rs src/main.ts",
-    "prepare": "husky"
+    "prepare": "husky",
+    "lint-all": "prettier --config ./.prettierrc --ignore-path ./.prettierignore -w ."
   },
   "dependencies": {
     "argon2": "^0.31.2",
