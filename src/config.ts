@@ -17,6 +17,7 @@ export default {
   // API config
   api: {
     prefix: process.env.API_PREFIX || '/',
+    errorReportingEmail: process.env.ERROR_EMAIL || '',
   },
 
   application: {
