@@ -8,6 +8,10 @@ export class ServiceError extends Error {
     this.httpCode = httpStatus;
   }
 
+  static internalError(reason: string) {
+    return new ServiceError('EE00', reason, 500);
+  }
+
   public toJson() {
     return {
       errorCode: this.errorCode,
