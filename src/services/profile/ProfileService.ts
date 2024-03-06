@@ -5,6 +5,7 @@ import {
   ISearchableProfile,
   IExtraProfileInformation,
   IProfile,
+  ENUMERATABLE_FIELDS,
 } from '@/models/profile/profile';
 import { ProfileRepository } from '@/repositories/ProfileRepository';
 import { ServiceResponse } from '@/shared/classes/serviceResponse';
@@ -14,6 +15,8 @@ import ProfileErrors from './ProfileErrors';
 import Logger from '@/providers/Logger';
 import { IPaginationParams } from '@/shared/classes/pagination';
 import Database from '@/database/Database';
+import Profile from '@/database/schemas/Profile';
+import { ServiceError } from '@/shared/classes/serviceError';
 
 @Service('ProfileService')
 export default class ProfileService {
@@ -129,6 +132,34 @@ export default class ProfileService {
       Logger.debug('ProfileService | GetFullProfile | Finished');
       return ServiceResponse.ok(recommendedProfile);
     });
+  }
+
+  public async enumerateField(
+    fieldName: string
+  ): Promise<ServiceResponse<IProfileDTO>> {
+    Logger.debug('ProfileService | EnumerateField | Started');
+    if (!ENUMERATABLE_FIELDS.includes(fieldName)) {
+      throw ProfileErrors.fieldNotAllowed;
+    }
+
+    const fieldValues = await this.profileRepository
+      .getAllValuesForField(fieldName)
+      .catch((e) => {
+        throw ServiceError.internalError(e.name);
+      });
+    if (fieldValues === null) {
+      throw ProfileErrors.fieldValuesNotFound;
+    }
+
+    const valuesList = [];
+    for (const entry of fieldValues) {
+      const value = entry[fieldName as keyof Profile];
+      if (!!value) {
+        valuesList.push(value);
+      }
+    }
+    Logger.debug('ProfileService | EnumerateField | Finished');
+    return ServiceResponse.ok(valuesList);
   }
 
   public async getFullProfile(

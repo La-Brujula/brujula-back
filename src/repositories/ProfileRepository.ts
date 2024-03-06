@@ -23,6 +23,7 @@ import Profile from '@/database/schemas/Profile';
 import { IPaginationParams } from '@/shared/classes/pagination';
 import { Repository } from 'sequelize-typescript';
 import ProfileErrors from '@/services/profile/ProfileErrors';
+import { Cast, Col, Fn } from 'sequelize/types/utils';
 
 @Service('ProfileRepository')
 export class ProfileRepository {
@@ -58,6 +59,14 @@ export class ProfileRepository {
     });
   }
 
+  async getAllValuesForField(fieldName: string, transaction?: Transaction) {
+    return await this.db.findAll({
+      attributes: [[Sequelize.fn('DISTINCT', col(fieldName)), fieldName]],
+      order: [[col(fieldName), 'ASC']],
+      transaction,
+    });
+  }
+
   async findById(id: string, transaction?: Transaction) {
     return await this.db.findByPk(id, {
       include: [this.recommendationsInclude],
@@ -72,12 +81,23 @@ export class ProfileRepository {
     );
   }
 
+  dmetaphone(text: string | Fn | Col | Cast) {
+    return fn('DMETAPHONE', text);
+  }
+
   buildTextSearchQuery(query: string) {
     return fn(
       'GREATEST',
-      fn('SIMILARITY', this.concatColumns('firstName', 'lastName'), query),
-      fn('SIMILARITY', col('nickName'), query),
-      fn('SIMILARITY', this.concatColumns('city', 'state', 'country'), query)
+      fn(
+        'WORD_SIMILARITY',
+        query,
+        this.concatColumns('firstName', 'nickName', 'lastName')
+      ),
+      fn(
+        'WORD_SIMILARITY',
+        query,
+        this.concatColumns('city', 'state', 'country', 'postalCode')
+      )
     );
   }
 
@@ -105,12 +125,16 @@ export class ProfileRepository {
           {
             searchable: true,
           },
-          !!query && where(this.buildTextSearchQuery(query), Op.gte, 0.3),
+          !!query && where(this.buildTextSearchQuery(query), Op.gte, 0.4),
           !!name &&
             where(
-              this.concatColumns('firstName', 'lastName'),
-              Op.iLike,
-              `%${name}%`
+              fn(
+                'WORD_SIMILARITY',
+                name,
+                this.concatColumns('firstName', 'nickname', 'lastName')
+              ),
+              Op.gte,
+              0.3
             ),
           !!activity && {
             [Op.or]: [

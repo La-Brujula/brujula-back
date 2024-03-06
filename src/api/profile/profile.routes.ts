@@ -48,6 +48,8 @@ export default (app: Router) => {
       profileController.updateMe
     );
 
+  router.get('/fields/:field', profileController.getFieldEnumeration);
+
   router
     .route('/:profileId/recommendations')
     .all(authenticateRequest, notSelf)

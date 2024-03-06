@@ -38,11 +38,11 @@ export class ServiceResponse<T> {
 
     this.isSuccess = isSuccess;
     this.httpStatus = httpStatus;
-    if (!!errorMessage && errorCode) {
-      this.error = new ServiceError(errorCode, errorMessage);
+    if (!!errorMessage) {
+      this.error = new ServiceError(errorCode || 'EE00', errorMessage);
     }
     this.entity = entity;
-    this.errorCode = errorCode;
+    this.errorCode = errorCode || 'EE00';
 
     if (
       totalItems !== undefined &&
@@ -84,13 +84,7 @@ export class ServiceResponse<T> {
   }
 
   public static fail<U>(error: Error, errorCode?: string): ServiceResponse<U> {
-    return new ServiceResponse<U>(
-      false,
-      500,
-      error.message,
-      undefined,
-      errorCode
-    );
+    return new ServiceResponse<U>(false, 500, error.name, undefined, errorCode);
   }
 
   public getValue(): T | T[] | null {
@@ -103,15 +97,14 @@ export class ServiceResponse<T> {
   public toJson() {
     return {
       isSuccess: this.isSuccess,
+      ...(this.meta && { meta: this.meta }),
       ...(this.isSuccess
         ? {
             entity: this.entity,
           }
         : {
-            error: this.error,
-            errorCode: this.errorCode,
+            error: this.error!.toJson(),
           }),
-      ...(this.meta && { meta: this.meta }),
     };
   }
 }

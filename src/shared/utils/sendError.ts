@@ -1,5 +1,7 @@
 import Logger from '@/providers/Logger';
 import { NextFunction, Request, RequestHandler, Response } from 'express';
+import { sendResponse } from './sendResponse';
+import { ServiceResponse } from '../classes/serviceResponse';
 
 export function handleAsync(asyncFunction: RequestHandler) {
   return async (req: Request, res: Response, next: NextFunction) => {
@@ -13,12 +15,12 @@ export function handleAsync(asyncFunction: RequestHandler) {
       }
       if (!!error.errorCode) {
         Logger.log('warn', error);
-        return res.status(error.httpCode).json(error.toJson());
+        return sendResponse(res, ServiceResponse.fail(error));
       } else {
         Logger.log('error', error);
         console.error(error);
 
-        return res.status(500).json(error);
+        return sendResponse(res, ServiceResponse.fail(error));
       }
     }
   };

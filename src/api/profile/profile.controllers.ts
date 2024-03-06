@@ -66,6 +66,14 @@ export default class ProfileController {
     }
   );
 
+  public getFieldEnumeration = handleAsync(
+    async (req: Request, res: Response) => {
+      const { field } = req.params;
+      const profileMeResponse = await this.profileService.enumerateField(field);
+      return sendResponse(res, profileMeResponse);
+    }
+  );
+
   public attachParamToUser = async (
     req: Request,
     _: Response,

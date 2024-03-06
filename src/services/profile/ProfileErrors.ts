@@ -9,6 +9,12 @@ const ProfileErrors = {
     409
   ),
   notRecommended: new ServiceError('PE04', 'Profile is not recommended', 409),
+  fieldValuesNotFound: new ServiceError(
+    'PE05',
+    'No values found for column',
+    404
+  ),
+  fieldNotAllowed: new ServiceError('PE06', 'Field cannot be enumerated', 403),
 };
 
 export default ProfileErrors;
