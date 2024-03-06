@@ -98,3 +98,7 @@ export interface IProfileSearchQuery {
   certifications?: string;
   email?: string;
 }
+
+export type EnumeratableField = 'city' | 'state' | 'university';
+
+export const ENUMERATABLE_FIELDS = ['city', 'state', 'university'];

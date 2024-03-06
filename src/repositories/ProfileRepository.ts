@@ -58,6 +58,14 @@ export class ProfileRepository {
     });
   }
 
+  async getAllValuesForField(fieldName: string, transaction?: Transaction) {
+    return await this.db.findAll({
+      attributes: [[Sequelize.fn('DISTINCT', col(fieldName)), fieldName]],
+      order: [[col(fieldName), 'ASC']],
+      transaction,
+    });
+  }
+
   async findById(id: string, transaction?: Transaction) {
     return await this.db.findByPk(id, {
       include: [this.recommendationsInclude],

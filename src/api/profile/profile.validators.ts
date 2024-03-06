@@ -1,4 +1,5 @@
-import { body, query } from 'express-validator';
+import { ENUMERATABLE_FIELDS } from '@/models/profile/profile';
+import { body, param, query } from 'express-validator';
 
 export const bodyMatchesSearchQuery = [
   query('query').optional().trim().isString().trim().toLowerCase(),
@@ -40,6 +41,10 @@ export const validatePagination = [
     .default(10)
     .toInt(),
   query('offset').optional().trim().isInt({ min: 0 }).default(0).toInt(),
+];
+
+export const validateFieldEnumeration = [
+  param('field').isIn(ENUMERATABLE_FIELDS),
 ];
 
 export const validateProfileCreation = [
