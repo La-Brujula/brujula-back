@@ -15,7 +15,14 @@ export function handleAsync(asyncFunction: RequestHandler) {
       }
       if (!!error.errorCode) {
         Logger.log('warn', error);
-        return sendResponse(res, ServiceResponse.fail(error));
+        const serviceResponse = new ServiceResponse<null>(
+          false,
+          error.httpCode,
+          error.name,
+          undefined,
+          error.errorCode
+        );
+        return sendResponse(res, serviceResponse);
       } else {
         Logger.log('error', error);
         console.error(error);
