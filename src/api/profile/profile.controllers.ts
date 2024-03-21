@@ -27,11 +27,12 @@ export default class ProfileController {
     const { ProfileId } = req.user;
     const newProfileInfo: ISearchableProfile & IExtraProfileInformation =
       req.body;
-    const accountsSignUpResponse = await this.profileService.updateProfile(
+
+    const profileUpdateResponse = await this.profileService.updateProfile(
       ProfileId,
       newProfileInfo
     );
-    return sendResponse(res, accountsSignUpResponse);
+    return sendResponse(res, profileUpdateResponse);
   });
 
   public create = handleAsync(async (req: Request, res: Response) => {
