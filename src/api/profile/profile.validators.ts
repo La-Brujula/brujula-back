@@ -2,45 +2,85 @@ import { ENUMERATABLE_FIELDS } from '@/models/profile/profile';
 import { body, param, query } from 'express-validator';
 
 export const bodyMatchesSearchQuery = [
-  query('query').optional().trim().isString().trim().toLowerCase(),
-  query('name').optional().trim().isString().trim().toLowerCase(),
+  query('query')
+    .optional({ values: 'falsy' })
+    .trim()
+    .isString()
+    .trim()
+    .toLowerCase(),
+  query('name')
+    .optional({ values: 'falsy' })
+    .trim()
+    .isString()
+    .trim()
+    .toLowerCase(),
   query('activity')
-    .optional()
+    .optional({ values: 'falsy' })
     .isString()
     .trim()
     .matches(/\d\d?\d?-?\d?\d?/),
-  query('location').optional().trim().isString().trim().toLowerCase(),
+  query('location')
+    .optional({ values: 'falsy' })
+    .trim()
+    .isString()
+    .trim()
+    .toLowerCase(),
   query('gender')
-    .optional()
+    .optional({ values: 'falsy' })
     .trim()
     .isString()
     .trim()
     .toLowerCase()
     .isIn(['male', 'female', 'other']),
-  query('remote').optional().trim().isBoolean().toBoolean(),
+  query('remote').optional({ values: 'falsy' }).trim().isBoolean().toBoolean(),
   query('type')
-    .optional()
+    .optional({ values: 'falsy' })
     .trim()
     .isString()
     .trim()
     .toLowerCase()
     .isIn(['moral', 'fisica']),
-  query('language').optional().trim().isString().isISO6391(),
-  query('university').optional().trim().isString().trim().toLowerCase(),
-  query('probono').optional().trim().isBoolean().toBoolean(),
-  query('associations').optional().trim().isString().trim().toLowerCase(),
-  query('certifications').optional().trim().isString().trim().toLowerCase(),
-  query('email').optional().trim().isString().isEmail().normalizeEmail(),
+  query('language').optional({ values: 'falsy' }).trim().isString().isISO6391(),
+  query('university')
+    .optional({ values: 'falsy' })
+    .trim()
+    .isString()
+    .trim()
+    .toLowerCase(),
+  query('probono').optional({ values: 'falsy' }).trim().isBoolean().toBoolean(),
+  query('associations')
+    .optional({ values: 'falsy' })
+    .trim()
+    .isString()
+    .trim()
+    .toLowerCase(),
+  query('certifications')
+    .optional({ values: 'falsy' })
+    .trim()
+    .isString()
+    .trim()
+    .toLowerCase(),
+  query('email')
+    .optional({ values: 'falsy' })
+    .trim()
+    .isString()
+    .isEmail()
+    .normalizeEmail(),
 ];
 
 export const validatePagination = [
   query('limit')
-    .optional()
+    .optional({ values: 'falsy' })
     .trim()
     .isInt({ min: 1, max: 10 })
     .default(10)
     .toInt(),
-  query('offset').optional().trim().isInt({ min: 0 }).default(0).toInt(),
+  query('offset')
+    .optional({ values: 'falsy' })
+    .trim()
+    .isInt({ min: 0 })
+    .default(0)
+    .toInt(),
 ];
 
 export const validateFieldEnumeration = [
@@ -54,44 +94,45 @@ export const validateProfileCreation = [
 
 export const validateProfileUpdate = [
   body('firstName')
-    .optional()
+    .optional({ values: 'falsy' })
     .trim()
     .isString()
-    .isLength({ min: 1, max: 128 })
-    .trim(),
+    .isLength({ min: 1, max: 128 }),
   body('lastName')
-    .optional()
+    .optional({ values: 'falsy' })
     .trim()
     .isString()
-    .isLength({ min: 1, max: 128 })
-    .trim(),
+    .isLength({ min: 1, max: 128 }),
   body('nickName')
-    .optional()
+    .optional({ values: 'falsy' })
     .trim()
     .isString()
-    .isLength({ min: 1, max: 128 })
-    .trim(),
-  body('secondaryEmails').optional().trim().isArray(),
-  body('secondaryEmails.*').optional().trim().isEmail().normalizeEmail(),
+    .isLength({ min: 1, max: 128 }),
+  body('secondaryEmails').optional({ values: 'falsy' }).trim().isArray(),
+  body('secondaryEmails.*')
+    .optional({ values: 'falsy' })
+    .trim()
+    .isEmail()
+    .normalizeEmail(),
   body('primaryActivity')
-    .optional()
+    .optional({ values: 'falsy' })
     .trim()
     .isString()
     .matches(/\d{3}-\d{2}/),
   body('secondaryActivity')
-    .optional()
+    .optional({ values: 'falsy' })
     .trim()
     .isString()
     .matches(/\d{3}-\d{2}/),
   body('thirdActivity')
-    .optional()
+    .optional({ values: 'falsy' })
     .trim()
     .isString()
     .matches(/\d{3}-\d{2}/),
-  body('phoneNumbers').optional().trim().isArray(),
-  body('phoneNumbers.*').optional().trim().isString(),
+  body('phoneNumbers').optional({ values: 'falsy' }).trim().isArray(),
+  body('phoneNumbers.*').optional({ values: 'falsy' }).trim().isString(),
   body('languages')
-    .optional()
+    .optional({ values: 'falsy' })
     .isArray()
     .customSanitizer((userInput) => {
       return userInput.map(
@@ -101,40 +142,79 @@ export const validateProfileUpdate = [
         }) => `${v.lang}:${v.proficiency}`
       );
     }),
-  body('languages.*.lang').optional().trim().isString().isISO6391(),
+  body('languages.*.lang')
+    .optional({ values: 'falsy' })
+    .trim()
+    .isString()
+    .isISO6391(),
   body('languages.*.proficiency')
-    .optional()
+    .optional({ values: 'falsy' })
     .trim()
     .isString()
     .isIn(['basic', 'intermediate', 'advanced', 'native']),
-  body('gender').optional().trim().isString().isIn(['male', 'female', 'other']),
-  body('state').optional().trim().isString().isLength({ min: 1, max: 128 }),
-  body('city').optional().trim().isString().isLength({ min: 1, max: 64 }),
-  body('country').optional().trim().isISO31661Alpha2(),
-  body('postalCode').optional().trim().isPostalCode('any'),
+  body('gender')
+    .optional({ values: 'falsy' })
+    .trim()
+    .isString()
+    .isIn(['male', 'female', 'other']),
+  body('state')
+    .optional({ values: 'falsy' })
+    .trim()
+    .isString()
+    .isLength({ min: 1, max: 128 }),
+  body('city')
+    .optional({ values: 'falsy' })
+    .trim()
+    .isString()
+    .isLength({ min: 1, max: 64 }),
+  body('country').optional({ values: 'falsy' }).trim().isISO31661Alpha2(),
+  body('postalCode').optional({ values: 'falsy' }).trim().isPostalCode('any'),
   body('workRadius')
-    .optional()
+    .optional({ values: 'falsy' })
     .trim()
     .isIn(['local', 'state', 'national', 'international']),
   body('university')
-    .optional()
+    .optional({ values: 'falsy' })
     .trim()
     .isString()
     .isLength({ min: 1, max: 128 }),
   body('associations')
-    .optional()
+    .optional({ values: 'falsy' })
     .trim()
     .isString()
     .isLength({ min: 1, max: 512 }),
-  body('remote').optional().trim().isBoolean().toBoolean(),
-  body('probono').optional().trim().isBoolean().toBoolean(),
+  body('remote').optional({ values: 'null' }).trim().toBoolean().isBoolean(),
+  body('probono').optional({ values: 'null' }).trim().toBoolean().isBoolean(),
   body('certifications')
-    .optional()
+    .optional({ values: 'falsy' })
     .trim()
     .isString()
     .isLength({ min: 1, max: 512 }),
-  body('headline').optional().trim().isString().isLength({ min: 1, max: 60 }),
-  body('birthday').optional().trim().isISO8601(),
-  body('profilePictureUrl').optional().trim().isURL(),
-  body('headerPictureUrl').optional().trim().isURL(),
+  body('headline')
+    .optional({ values: 'falsy' })
+    .trim()
+    .isString()
+    .isLength({ min: 1, max: 60 }),
+  body('birthday').optional({ values: 'falsy' }).trim().isISO8601().toDate(),
+  body('profilePictureUrl').optional({ values: 'falsy' }).trim().isURL(),
+  body('headerPictureUrl').optional({ values: 'falsy' }).trim().isURL(),
+  body('externalLinks').optional({ values: 'falsy' }).isArray(),
+  body('externalLinks.*').optional({ values: 'falsy' }).isURL(),
+  ...[
+    'whatsapp',
+    'imdb',
+    'facebook',
+    'instagram',
+    'vimeo',
+    'youtube',
+    'linkedin',
+    'twitter',
+    'tiktok',
+  ].map((property) =>
+    body(property)
+      .optional({ values: 'falsy' })
+      .trim()
+      .isString()
+      .isLength({ min: 1, max: 128 })
+  ),
 ];

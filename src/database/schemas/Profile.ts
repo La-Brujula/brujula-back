@@ -1,8 +1,7 @@
 import { IProfile } from '@/models/profile/profile';
 import {
+  AfterUpdate,
   AllowNull,
-  BeforeUpdate,
-  BelongsTo,
   BelongsToMany,
   Column,
   CreatedAt,
@@ -18,7 +17,6 @@ import {
   Model,
   PrimaryKey,
   Table,
-  Unique,
   UpdatedAt,
 } from 'sequelize-typescript';
 import { UUIDV4 } from 'sequelize';
@@ -184,7 +182,7 @@ export default class Profile extends Model implements IProfile {
   @DeletedAt
   deletedAt!: Date;
 
-  @BeforeUpdate
+  @AfterUpdate
   static async updateVector(instance: Profile) {
     instance.setDataValue(
       'recommendationsCount',
