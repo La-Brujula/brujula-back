@@ -87,6 +87,10 @@ export const validateFieldEnumeration = [
   param('field').isIn(ENUMERATABLE_FIELDS),
 ];
 
+export const validateFieldEnumeration = [
+  param('field').isIn(ENUMERATABLE_FIELDS),
+];
+
 export const validateProfileCreation = [
   body('email').isEmail().normalizeEmail(),
   body('type').isIn(['moral', 'fisica']),
