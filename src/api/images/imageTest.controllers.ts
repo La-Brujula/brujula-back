@@ -6,7 +6,11 @@ import { Service } from 'typedi';
 @Service()
 export default class ImageTestControllers {
   public uploadImage = handleAsync(async (req: Request, res: Response) => {
-    const imageSaveResult = await ImageUploader.saveImage(req, 'image');
+    const imageSaveResult = await ImageUploader.saveImage(
+      req,
+      'image',
+      req.user.ProfileId
+    );
     if (imageSaveResult === false) throw Error('Could not process image');
     const { link, ref } = imageSaveResult;
     return res.status(202).json({ imageUrl: link, imageId: ref });

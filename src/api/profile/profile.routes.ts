@@ -47,6 +47,16 @@ export default (app: Router) => {
       handleValidationErrors,
       profileController.updateMe
     );
+  router.post(
+    '/me/profile',
+    authenticateRequest,
+    profileController.uploadProfilePicture
+  );
+  router.post(
+    '/me/cover',
+    authenticateRequest,
+    profileController.uploadCoverPicture
+  );
 
   router.get('/fields/:field', profileController.getFieldEnumeration);
 

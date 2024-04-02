@@ -190,6 +190,16 @@ export const validateProfileUpdate = [
     .trim()
     .isString()
     .isLength({ min: 1, max: 512 }),
+  body('awards')
+    .optional({ values: 'falsy' })
+    .trim()
+    .isString()
+    .isLength({ min: 1, max: 512 }),
+  body('biography')
+    .optional({ values: 'falsy' })
+    .trim()
+    .isString()
+    .isLength({ min: 1, max: 512 }),
   body('headline')
     .optional({ values: 'falsy' })
     .trim()

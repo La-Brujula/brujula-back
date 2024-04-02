@@ -39,6 +39,8 @@ export interface ISearchableProfile {
 }
 
 export interface IExtraProfileInformation {
+  awards?: string;
+  biography?: string;
   headline?: string;
   birthday?: Date;
   externalLinks?: string[];
@@ -69,6 +71,7 @@ export interface IProfileDTO {
   gender?: 'male' | 'female' | 'other';
   location?: string;
   profilePictureUrl?: string;
+  headerPictureUrl?: string;
   headline?: string;
 }
 

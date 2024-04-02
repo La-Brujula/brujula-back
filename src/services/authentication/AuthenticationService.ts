@@ -47,7 +47,14 @@ export default class AuthenticationService {
     Logger.debug('AccountService | addAccount | Hashing password');
     const hashedPassword = hashPassword(newAccount.email, newAccount.password);
 
-    const profile = await this.getProfileIdIfExists(newAccount.email);
+    let profile = await this.getProfileIdIfExists(newAccount.email);
+
+    if (profile === null) {
+      profile = await this.profileRepository.create({
+        email: newAccount.email,
+        type: newAccount.type || 'fisica',
+      });
+    }
 
     Logger.debug('AccountService | addAccount | Creating account');
     const accountRecord = await this.authenticationRepository.create(
@@ -107,7 +114,10 @@ export default class AuthenticationService {
     const accountDeleted = await this.authenticationRepository.delete(
       accountInfo.email
     );
-    if (!accountDeleted) {
+    const profileDeleted = await this.profileRepository.delete(
+      accountInfo.ProfileId
+    );
+    if (!accountDeleted || !profileDeleted) {
       throw AuthenticationErrors.couldNotDeleteAccount;
     }
     Logger.debug('AccountService | deleteAccount | Deleted account');

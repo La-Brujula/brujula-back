@@ -18,7 +18,7 @@ export function handleAsync(asyncFunction: RequestHandler) {
         const serviceResponse = new ServiceResponse<null>(
           false,
           error.httpCode,
-          error.name,
+          error.message,
           undefined,
           error.errorCode
         );

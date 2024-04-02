@@ -1,7 +1,11 @@
 import { IProfile } from '@/models/profile/profile';
 import {
+  AfterCreate,
+  AfterDestroy,
+  AfterSave,
   AfterUpdate,
   AllowNull,
+  BeforeSave,
   BelongsToMany,
   Column,
   CreatedAt,
@@ -142,6 +146,8 @@ export default class Profile extends Model implements IProfile {
   @Column university?: string;
   @Column(DataType.TEXT) associations?: string;
   @Column(DataType.TEXT) certifications?: string;
+  @Column(DataType.TEXT) awards?: string;
+  @Column(DataType.TEXT) biography?: string;
 
   @Column
   probono?: boolean;
@@ -149,11 +155,9 @@ export default class Profile extends Model implements IProfile {
   @Column
   remote?: boolean;
 
-  @IsUrl
   @Column
   profilePictureUrl?: string;
 
-  @IsUrl
   @Column
   headerPictureUrl?: string;
 
@@ -182,36 +186,36 @@ export default class Profile extends Model implements IProfile {
   @DeletedAt
   deletedAt!: Date;
 
-  @AfterUpdate
-  static async updateVector(instance: Profile) {
-    instance.setDataValue(
+  @AfterSave
+  static async updateRecommendedCount(user: Profile) {
+    user.setDataValue(
       'recommendationsCount',
-      await instance.$count('recommendations')
+      await user.$count('recommendations')
     );
-    instance.setDataValue(
-      'searchable',
-      ['primaryActivity', 'firstName', 'gender'].every((p) => !!instance.get(p))
+  }
+
+  @BeforeSave
+  static async updateVector(user: Profile) {
+    user.searchable = ['primaryActivity', 'firstName', 'gender'].every(
+      (p) => !!user.get(p)
     );
-    instance.setDataValue(
-      'searchString',
-      [
-        instance.get('fullName'),
-        instance.get('nickname'),
-        instance.get('primaryEmail'),
-        instance.get('secondaryEmails'),
-        instance.get('phoneNumbers'),
-        instance.get('primaryActivity'),
-        instance.get('secondaryActivity'),
-        instance.get('thirdActivity'),
-        instance.get('location'),
-        instance.get('certifications'),
-        instance.get('associations'),
-        instance.get('university'),
-      ]
-        .flat()
-        .filter((a) => !!a)
-        .join(' ')
-    );
+    user.searchString = [
+      user.get('fullName'),
+      user.get('nickname'),
+      user.get('primaryEmail'),
+      user.get('secondaryEmails'),
+      user.get('phoneNumbers'),
+      user.get('primaryActivity'),
+      user.get('secondaryActivity'),
+      user.get('thirdActivity'),
+      user.get('location'),
+      user.get('certifications'),
+      user.get('associations'),
+      user.get('university'),
+    ]
+      .flat()
+      .filter((a) => !!a)
+      .join(' ');
   }
 
   toDTO() {
@@ -231,4 +235,24 @@ export class ProfileRecommendations extends Model {
   @ForeignKey(() => Profile)
   @Column
   recommendedBy!: string;
+
+  @AfterCreate
+  @AfterDestroy
+  static async updateRecommendationCount(
+    recommendation: ProfileRecommendations
+  ) {
+    const profileModel = recommendation.sequelize.model('Profile');
+    const profileRecommendationsModel = recommendation.sequelize.model(
+      'ProfileRecommendations'
+    );
+    const recommendationsCount = await profileRecommendationsModel.count({
+      where: { profileId: recommendation.profileId },
+    });
+    await profileModel.update(
+      {
+        recommendationCount: recommendationsCount,
+      },
+      { where: { id: recommendation.profileId } }
+    );
+  }
 }

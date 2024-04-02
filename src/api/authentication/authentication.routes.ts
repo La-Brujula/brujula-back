@@ -1,7 +1,7 @@
 import { Router } from 'express';
-import AuthenticationController from './authentication.controllers';
 import Container from 'typedi';
 import { body } from 'express-validator';
+import AuthenticationController from './authentication.controllers';
 import handleValidationErrors from '@/shared/utils/handleValidationErrors';
 import authenticateRequest from '@/shared/middleware/authenticateRequest';
 

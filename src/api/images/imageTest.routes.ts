@@ -3,6 +3,7 @@ import Container from 'typedi';
 import ImageTestControllers from './imageTest.controllers';
 import { param } from 'express-validator';
 import handleValidationErrors from '@/shared/utils/handleValidationErrors';
+import isAdmin from '@/shared/middleware/isAdmin';
 
 const router: Router = Router();
 export default (app: Router) => {
@@ -10,12 +11,10 @@ export default (app: Router) => {
 
   const imageTestController = Container.get(ImageTestControllers);
 
-  router.post('/image', imageTestController.uploadImage);
+  router.post('/image', isAdmin, imageTestController.uploadImage);
   router.get(
     '/:imageId',
-    param('imageId').customSanitizer((value) => {
-      return value.replace('/', '');
-    }),
+    param('imageId').isString(),
     handleValidationErrors,
     imageTestController.getImage
   );

@@ -6,7 +6,6 @@ import { Umzug, SequelizeStorage } from 'umzug';
 
 import Account from './schemas/Account';
 import Profile, { ProfileRecommendations } from './schemas/Profile';
-import { join } from 'path';
 
 @Service('Database')
 class Database {
@@ -61,7 +60,7 @@ class Database {
         glob: [
           'migrations/*.ts',
           {
-            cwd: join(__dirname, 'src', 'database'),
+            cwd: 'src/database',
             ignore: ['**/*.d.ts', '**/index.ts', '**/index.js'],
           },
         ],
@@ -71,7 +70,10 @@ class Database {
       logger: Logger,
     });
 
-    await umzug.up();
+    umzug.up({
+      migrations: (await umzug.pending()).map((m) => m.name),
+      rerun: 'SKIP',
+    });
   }
 
   public async shutdown() {

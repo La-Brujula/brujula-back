@@ -87,21 +87,24 @@ export default class ProfileService {
     Logger.debug('ProfileService | GetFullProfile | Started');
     return this.database.sequelize.transaction(async (transaction) => {
       const recommendedProfile = await this.getProfileOrThrow(recommendationId);
-      const recommendatorProfile =
-        await this.getProfileOrThrow(recommendedById);
+      await this.getProfileOrThrow(recommendedById);
 
       if (
-        await recommendedProfile.$has('recommendations', recommendatorProfile, {
-          transaction,
-        })
+        await this.profileRepository.recommendationExists(
+          recommendationId,
+          recommendedById,
+          transaction
+        )
       ) {
         throw ProfileErrors.alreadyRecommended;
       }
-      await recommendedProfile.$add('recommendations', recommendatorProfile, {
-        transaction,
-      });
+      await this.profileRepository.recommend(
+        recommendationId,
+        recommendedById,
+        transaction
+      );
       Logger.debug('ProfileService | GetFullProfile | Finished');
-      await recommendedProfile.save({ transaction });
+      await recommendedProfile.save();
       return ServiceResponse.ok(recommendedProfile, 201);
     });
   }
@@ -113,22 +116,24 @@ export default class ProfileService {
     Logger.debug('ProfileService | GetFullProfile | Started');
     return this.database.sequelize.transaction(async (transaction) => {
       const recommendedProfile = await this.getProfileOrThrow(recommendationId);
-      const recommendatorProfile =
-        await this.getProfileOrThrow(recommendedById);
+      await this.getProfileOrThrow(recommendedById);
+
       if (
-        !(await recommendedProfile.$has(
-          'recommendations',
-          recommendatorProfile,
-          { transaction }
+        !(await this.profileRepository.recommendationExists(
+          recommendationId,
+          recommendedById,
+          transaction
         ))
       ) {
         throw ProfileErrors.notRecommended;
       }
 
-      recommendedProfile.$remove('recommendations', recommendatorProfile, {
-        transaction,
-      });
-      await recommendedProfile.save({ transaction });
+      await this.profileRepository.removeRecommendation(
+        recommendationId,
+        recommendedById,
+        transaction
+      );
+      await recommendedProfile.save();
       Logger.debug('ProfileService | GetFullProfile | Finished');
       return ServiceResponse.ok(recommendedProfile);
     });

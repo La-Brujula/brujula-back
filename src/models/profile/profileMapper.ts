@@ -22,6 +22,7 @@ export class ProfileMapper implements IMapper<IProfile> {
       gender: profile.gender,
       location: profile.location,
       profilePictureUrl: profile.profilePictureUrl,
+      headerPictureUrl: profile.headerPictureUrl,
       headline: profile.headline,
     };
   }
@@ -31,7 +32,9 @@ export class ProfileMapper implements IMapper<IProfile> {
     }
     return {
       associations: profile.associations,
+      awards: profile.awards,
       birthday: profile.birthday,
+      biography: profile.biography,
       certifications: profile.certifications,
       city: profile.city,
       country: profile.country,
@@ -41,6 +44,7 @@ export class ProfileMapper implements IMapper<IProfile> {
       fullName: profile.fullName,
       gender: profile.gender,
       headline: profile.headline,
+      headerPictureUrl: profile.headerPictureUrl,
       id: profile.id,
       imdb: profile.imdb,
       instagram: profile.instagram,

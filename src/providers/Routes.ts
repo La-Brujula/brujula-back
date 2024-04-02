@@ -1,4 +1,6 @@
 import { Application, Router } from 'express';
+import cors from 'cors';
+
 import config from '@/config';
 import authenticationRoutes from '@/api/authentication/authentication.routes';
 import imageTestRoutes from '@/api/images/imageTest.routes';
@@ -12,6 +14,8 @@ class Routes {
     const app = Router();
 
     _express.use(prefix, app);
+
+    app.use(cors());
 
     authenticationRoutes(app);
     imageTestRoutes(app);

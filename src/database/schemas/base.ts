@@ -1,9 +1,4 @@
-import {
-  CreationOptional,
-  InferAttributes,
-  InferCreationAttributes,
-  Model,
-} from 'sequelize';
+import { CreationOptional, Model } from 'sequelize';
 
 export class TimestampModel<
   InferAttributes extends {},

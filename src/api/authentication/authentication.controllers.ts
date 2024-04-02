@@ -18,6 +18,7 @@ export default class AuthenticationController {
 
   public logIn = handleAsync(async (req: Request, res: Response) => {
     const userInput: IAuthenticationRequestBody = req.body;
+    Logger.debug('AuthenticationController | LogIn | Start');
     const accountsLoginResponse: ServiceResponse<IAuthenticationResponseBody> =
       await this.authService.logIn(userInput);
     if (!accountsLoginResponse.isSuccess) {

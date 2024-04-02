@@ -19,7 +19,7 @@ import {
   literal,
   where,
 } from 'sequelize';
-import Profile from '@/database/schemas/Profile';
+import Profile, { ProfileRecommendations } from '@/database/schemas/Profile';
 import { IPaginationParams } from '@/shared/classes/pagination';
 import { Repository } from 'sequelize-typescript';
 import ProfileErrors from '@/services/profile/ProfileErrors';
@@ -29,9 +29,13 @@ import { Cast, Col, Fn } from 'sequelize/types/utils';
 export class ProfileRepository {
   declare sequelize: Sequelize;
   declare db: Repository<Profile>;
+  declare recommendationsDb: Repository<ProfileRecommendations>;
   declare recommendationsInclude: {};
   constructor(@Inject('Database') database: Database) {
     this.db = database.sequelize.getRepository(Profile);
+    this.recommendationsDb = database.sequelize.getRepository(
+      ProfileRecommendations
+    );
     this.sequelize = database.sequelize;
 
     this.recommendationsInclude = {
@@ -49,6 +53,55 @@ export class ProfileRepository {
         'recommendationsCount',
       ],
     };
+  }
+
+  async recommendationExists(
+    recommendedId: string,
+    recommendedById: string,
+    transaction?: Transaction
+  ) {
+    return !!(await this.recommendationsDb.findOne({
+      where: {
+        [Op.and]: [
+          {
+            profileId: recommendedId,
+          },
+          {
+            recommendedBy: recommendedById,
+          },
+        ],
+      },
+      attributes: ['createdAt'],
+      transaction,
+    }));
+  }
+  async recommend(
+    recommendedId: string,
+    recommendedById: string,
+    transaction?: Transaction
+  ) {
+    return await this.recommendationsDb.create(
+      {
+        profileId: recommendedId,
+        recommendedBy: recommendedById,
+      },
+      {
+        transaction,
+      }
+    );
+  }
+  async removeRecommendation(
+    recommendedId: string,
+    recommendedById: string,
+    transaction?: Transaction
+  ) {
+    return await this.recommendationsDb.destroy({
+      where: {
+        profileId: recommendedId,
+        recommendedBy: recommendedById,
+      },
+      transaction,
+    });
   }
 
   async findByEmail(email: string, transaction?: Transaction) {
@@ -186,32 +239,27 @@ export class ProfileRepository {
         ].filter((v) => v !== false) as WhereOptions<Profile>,
       },
     } as FindAndCountOptions;
-    return [
-      await this.db.count({
-        ...searchQuery,
-        attributes: [],
-      }),
-      await this.db.findAll({
-        ...searchQuery,
-        order: [
-          !!query && [this.buildTextSearchQuery(query), 'DESC'],
-          ['subscriber', 'DESC'],
-          ['recommendationsCount', 'DESC'],
-          !!activity && [
-            literal(`CASE
-        WHEN "Profile"."primaryActivity" ILIKE ${this.sequelize.escape(activity + '%')} THEN 3
-        WHEN "Profile"."secondaryActivity" ILIKE ${this.sequelize.escape(activity + '%')} THEN 2
-        WHEN "Profile"."thirdActivity" ILIKE ${this.sequelize.escape(activity + '%')} THEN 1
-        ELSE 0
-        END`),
-            'DESC',
-          ],
-          ['firstName', 'DESC'],
-        ].filter((a) => !!a) as Order,
-        limit,
-        offset,
-      }),
-    ];
+    const queryRes = await this.db.findAndCountAll({
+      ...searchQuery,
+      order: [
+        !!query && [this.buildTextSearchQuery(query), 'DESC'],
+        ['subscriber', 'DESC'],
+        ['recommendationsCount', 'DESC'],
+        !!activity && [
+          literal(`CASE
+      WHEN "Profile"."primaryActivity" ILIKE ${this.sequelize.escape(activity + '%')} THEN 3
+      WHEN "Profile"."secondaryActivity" ILIKE ${this.sequelize.escape(activity + '%')} THEN 2
+      WHEN "Profile"."thirdActivity" ILIKE ${this.sequelize.escape(activity + '%')} THEN 1
+      ELSE 0
+      END`),
+          'DESC',
+        ],
+        ['firstName', 'DESC'],
+      ].filter((a) => !!a) as Order,
+      limit,
+      offset,
+    });
+    return [queryRes.count, queryRes.rows];
   }
 
   async create(

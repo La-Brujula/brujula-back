@@ -8,6 +8,7 @@ export default function requestLog(tokens: any, req: Request, res: Response) {
   Logger.log(
     level,
     [
+      req.id,
       `${tokens['response-time'](req, res)} ms |`,
       statusCode,
       method,

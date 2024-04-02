@@ -26,7 +26,7 @@ class Express {
   }
 
   setMiddleware() {
-    this.express.use(cors({ credentials: true, origin: true }));
+    this.express.use(cors({ credentials: true, preflightContinue: true }));
     this.express.use(express.json({ limit: '512kb' }));
     this.express.use(express.urlencoded({ extended: true }));
     this.express.use(compression());
@@ -47,7 +47,7 @@ class Express {
       })
     );
     this.express.use((req, res, next) => {
-      req.id = new Date().valueOf() + randomBytes(4).toString('hex');
+      req.id = new Date().valueOf() + '-' + randomBytes(4).toString('hex');
       res.setHeader('x-api-trace-id', req.id);
       next();
     });

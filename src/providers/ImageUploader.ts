@@ -1,7 +1,6 @@
 import { Request } from 'express';
 import fs from 'fs';
 import config from '@/config';
-import crypto from 'crypto';
 import Logger from './Logger';
 import { UploadedFile } from 'express-fileupload';
 
@@ -14,24 +13,24 @@ class ImageUploader {
     this.imageServiceURL = config.images.imagesBaseURL;
   }
 
-  async saveImage(req: Request, imageAttribute: string) {
+  async saveImage(req: Request, imageAttribute: string, fileName: string) {
     if (req.files === null || req.files === undefined) return false;
 
     const file = req.files[imageAttribute];
     if (file === undefined) return false;
 
-    const { mv, name } = file as UploadedFile;
-
-    const hash = crypto.randomBytes(8).toString('hex');
-    const ref = `${hash}-${name}`;
-    const imagePath = `${this.destination}/${ref}`;
+    const { mv, mimetype } = file as UploadedFile;
+    const [type, ext] = mimetype.split('/');
+    if (type !== 'image') throw Error('Wrong mimetype on file');
+    fileName = fileName + `.${ext}`;
+    const imagePath = `${this.destination}/${fileName}`;
 
     mv(imagePath);
 
     Logger.debug(`Created file: ${imagePath}`);
 
-    const link = `${this.imageServiceURL}/${ref}`;
-    return { link, ref };
+    const link = `${this.imageServiceURL}/${fileName}`;
+    return { link, ref: fileName };
   }
 
   getFilePathFromImageId(imageId: string) {

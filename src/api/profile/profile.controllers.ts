@@ -4,6 +4,7 @@ import {
   IProfileSearchQuery,
   ISearchableProfile,
 } from '@/models/profile/profile';
+import ImageUploader from '@/providers/ImageUploader';
 import ProfileService from '@/services/profile/ProfileService';
 import { IPaginationParams } from '@/shared/classes/pagination';
 import { handleAsync } from '@/shared/utils/sendError';
@@ -16,6 +17,36 @@ export default class ProfileController {
   constructor(
     @Inject('ProfileService') private readonly profileService: ProfileService
   ) {}
+
+  public uploadProfilePicture = handleAsync(async (req, res) => {
+    const imageSaveResult = await ImageUploader.saveImage(
+      req,
+      'image',
+      req.user.ProfileId + 'pp'
+    );
+    if (imageSaveResult === false) throw Error('Could not process image');
+
+    const profileUpdateResponse = await this.profileService.updateProfile(
+      req.user.ProfileId,
+      { profilePictureUrl: imageSaveResult.link }
+    );
+    return sendResponse(res, profileUpdateResponse);
+  });
+
+  public uploadCoverPicture = handleAsync(async (req, res) => {
+    const imageSaveResult = await ImageUploader.saveImage(
+      req,
+      'image',
+      req.user.ProfileId + 'cover'
+    );
+    if (imageSaveResult === false) throw Error('Could not process image');
+
+    const profileUpdateResponse = await this.profileService.updateProfile(
+      req.user.ProfileId,
+      { headerPictureUrl: imageSaveResult.link }
+    );
+    return sendResponse(res, profileUpdateResponse);
+  });
 
   public search = handleAsync(async (req: Request, res: Response) => {
     const query: IProfileSearchQuery & IPaginationParams = req.body;
