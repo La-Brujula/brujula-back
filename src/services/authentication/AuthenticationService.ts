@@ -166,10 +166,12 @@ export default class AuthenticationService {
       passwordRecoveryAttempts: user.passwordRecoveryAttempts + 1,
     });
 
+    const passwordResetLink = `${config.application.frontend_url}/auth/new-password?code=${pin}&email=${email}`;
+
     await sendEmail(email, 'Reinicia tu contraseña', {
       template: 'passwordReset',
       context: {
-        passwordResetToken: pin,
+        passwordResetLink: passwordResetLink,
       },
     });
     Logger.debug('AccountService | createPasswordResetPin | Finished');
@@ -217,6 +219,9 @@ export default class AuthenticationService {
 
     if (userUpdate == 0) throw AuthenticationErrors.couldNotChangePassword;
     Logger.debug('AccountService | changePassword | Finished');
-    return ServiceResponse.ok(userUpdate);
+    const account: IAccountDTO = AccountMapper.toDto(user);
+    const token = generateToken(user, this.tokenSecret);
+
+    return ServiceResponse.ok({ account, token });
   }
 }

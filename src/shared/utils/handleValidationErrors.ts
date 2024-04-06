@@ -12,6 +12,8 @@ export default function handleValidationErrors(
     req.body = matchedData(req);
     return next();
   }
-
-  res.status(400).json({ errors: result.array() });
+  res.status(400).json({
+    isSuccess: false,
+    error: { errorCode: 'SE01', message: result.array() },
+  });
 }

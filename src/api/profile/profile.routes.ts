@@ -77,4 +77,12 @@ export default (app: Router) => {
       profileController.attachParamToUser,
       profileController.updateMe
     );
+
+  router.post(
+    '/adminRecommend',
+    authenticateRequest,
+    isAdmin,
+    handleValidationErrors,
+    profileController.adminRecommendProfile
+  );
 };

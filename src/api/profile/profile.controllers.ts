@@ -88,6 +88,17 @@ export default class ProfileController {
     return sendResponse(res, profileMeResponse);
   });
 
+  public adminRecommendProfile = handleAsync(
+    async (req: Request, res: Response) => {
+      const { recommendedById, recommendationId } = req.body;
+      const profileMeResponse = await this.profileService.recommend(
+        recommendedById,
+        recommendationId
+      );
+      return sendResponse(res, profileMeResponse);
+    }
+  );
+
   public revokeRecommendation = handleAsync(
     async (req: Request, res: Response) => {
       const profileMeResponse = await this.profileService.revokeRecommendation(
