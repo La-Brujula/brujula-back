@@ -60,7 +60,7 @@ export class ServiceResponse<T> {
   }
 
   public static ok<U>(value: any, status: number = 200): ServiceResponse<U> {
-    if (typeof value.toDTO === 'function') {
+    if (value !== undefined && typeof value.toDTO === 'function') {
       value = value.toDTO();
     }
     return new ServiceResponse<U>(true, status, undefined, value, undefined);

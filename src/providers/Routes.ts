@@ -6,6 +6,7 @@ import authenticationRoutes from '@/api/authentication/authentication.routes';
 import imageTestRoutes from '@/api/images/imageTest.routes';
 import profileRoutes from '@/api/profile/profile.routes';
 import errorReportingRoutes from '@/api/errorReporting/errorReporting.routes';
+import contactFormRoutes from '@/api/contactForm/contactForm.routes';
 
 class Routes {
   public setApiRoutes(_express: Application): void {
@@ -21,6 +22,7 @@ class Routes {
     imageTestRoutes(app);
     profileRoutes(app);
     errorReportingRoutes(app);
+    contactFormRoutes(app);
   }
 }
 
