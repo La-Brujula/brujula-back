@@ -2,10 +2,10 @@ import { IProfile } from '@/models/profile/profile';
 import {
   AfterCreate,
   AfterDestroy,
-  AfterSave,
-  AfterUpdate,
   AllowNull,
+  BeforeFind,
   BeforeSave,
+  BeforeSync,
   BelongsToMany,
   Column,
   CreatedAt,
@@ -17,7 +17,6 @@ import {
   IsDate,
   IsEmail,
   IsUUID,
-  IsUrl,
   Model,
   PrimaryKey,
   Table,
@@ -25,7 +24,6 @@ import {
 } from 'sequelize-typescript';
 import { UUIDV4 } from 'sequelize';
 import { ProfileMapper } from '@/models/profile/profileMapper';
-import Account from './Account';
 
 const ACTIVITY_REGEX = /\d{3}-\d{2}/;
 
@@ -186,16 +184,9 @@ export default class Profile extends Model implements IProfile {
   @DeletedAt
   deletedAt!: Date;
 
-  @AfterSave
-  static async updateRecommendedCount(user: Profile) {
-    user.setDataValue(
-      'recommendationsCount',
-      await user.$count('recommendations')
-    );
-  }
-
   @BeforeSave
   static async updateVector(user: Profile) {
+    user.recommendationsCount = await user.$count('recommendations');
     user.searchable = ['primaryActivity', 'firstName', 'gender'].every(
       (p) => !!user.get(p)
     );

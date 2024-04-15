@@ -11,6 +11,7 @@ import {
 } from './profile.validators';
 import { handleAsync } from '@/shared/utils/sendError';
 import isAdmin from '@/shared/middleware/isAdmin';
+import { body } from 'express-validator';
 
 const notSelf = handleAsync((req, _, next) => {
   if (req.user.ProfileId == req.params.profileId)
@@ -33,6 +34,8 @@ export default (app: Router) => {
   );
   router.post(
     '/',
+    authenticateRequest,
+    isAdmin,
     validateProfileCreation,
     handleValidationErrors,
     profileController.create
@@ -82,6 +85,8 @@ export default (app: Router) => {
     '/adminRecommend',
     authenticateRequest,
     isAdmin,
+    body('recommendationId').isUUID(4),
+    body('recommendedById').isUUID(4),
     handleValidationErrors,
     profileController.adminRecommendProfile
   );

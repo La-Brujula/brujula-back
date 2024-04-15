@@ -65,7 +65,19 @@ export const bodyMatchesSearchQuery = [
     .trim()
     .isString()
     .isEmail()
-    .normalizeEmail(),
+    .normalizeEmail({
+      all_lowercase: true,
+      gmail_lowercase: true,
+      gmail_remove_dots: false,
+      gmail_remove_subaddress: false,
+      gmail_convert_googlemaildotcom: false,
+      outlookdotcom_lowercase: true,
+      outlookdotcom_remove_subaddress: false,
+      yahoo_lowercase: true,
+      yahoo_remove_subaddress: false,
+      icloud_lowercase: true,
+      icloud_remove_subaddress: false,
+    }),
 ];
 
 export const validatePagination = [
@@ -88,7 +100,19 @@ export const validateFieldEnumeration = [
 ];
 
 export const validateProfileCreation = [
-  body('email').isEmail().normalizeEmail(),
+  body('email').isEmail().normalizeEmail({
+    all_lowercase: true,
+    gmail_lowercase: true,
+    gmail_remove_dots: false,
+    gmail_remove_subaddress: false,
+    gmail_convert_googlemaildotcom: false,
+    outlookdotcom_lowercase: true,
+    outlookdotcom_remove_subaddress: false,
+    yahoo_lowercase: true,
+    yahoo_remove_subaddress: false,
+    icloud_lowercase: true,
+    icloud_remove_subaddress: false,
+  }),
   body('type').isIn(['moral', 'fisica']),
 ];
 
@@ -113,7 +137,19 @@ export const validateProfileUpdate = [
     .optional({ values: 'falsy' })
     .trim()
     .isEmail()
-    .normalizeEmail(),
+    .normalizeEmail({
+      all_lowercase: true,
+      gmail_lowercase: true,
+      gmail_remove_dots: false,
+      gmail_remove_subaddress: false,
+      gmail_convert_googlemaildotcom: false,
+      outlookdotcom_lowercase: true,
+      outlookdotcom_remove_subaddress: false,
+      yahoo_lowercase: true,
+      yahoo_remove_subaddress: false,
+      icloud_lowercase: true,
+      icloud_remove_subaddress: false,
+    }),
   body('primaryActivity')
     .optional({ values: 'falsy' })
     .trim()

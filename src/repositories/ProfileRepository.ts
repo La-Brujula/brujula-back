@@ -175,9 +175,9 @@ export class ProfileRepository {
     const searchQuery = {
       where: {
         [Op.and]: [
-          {
-            searchable: true,
-          },
+          // {
+          //   searchable: true,
+          // },
           !!query && where(this.buildTextSearchQuery(query), Op.gte, 0.4),
           !!name &&
             where(
@@ -284,7 +284,8 @@ export class ProfileRepository {
   ) {
     const record = await this.db.findByPk(id, { transaction });
     if (!record) throw ProfileErrors.profileDoesNotExist;
-    await record.update(values, { transaction });
+    await record.update({ values }, { transaction });
+    record.save();
     return record;
   }
 }
