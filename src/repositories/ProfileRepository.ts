@@ -175,9 +175,9 @@ export class ProfileRepository {
     const searchQuery = {
       where: {
         [Op.and]: [
-          // {
-          //   searchable: true,
-          // },
+          {
+            searchable: true,
+          },
           !!query && where(this.buildTextSearchQuery(query), Op.gte, 0.4),
           !!name &&
             where(
