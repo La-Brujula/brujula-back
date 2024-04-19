@@ -5,6 +5,7 @@ import handleValidationErrors from '@/shared/utils/handleValidationErrors';
 import authenticateRequest from '@/shared/middleware/authenticateRequest';
 import {
   bodyMatchesSearchQuery,
+  validateFieldEnumeration,
   validatePagination,
   validateProfileCreation,
   validateProfileUpdate,
@@ -61,7 +62,11 @@ export default (app: Router) => {
     profileController.uploadCoverPicture
   );
 
-  router.get('/fields/:field', profileController.getFieldEnumeration);
+  router.get(
+    '/fields/:field',
+    validateFieldEnumeration,
+    profileController.getFieldEnumeration
+  );
 
   router
     .route('/:profileId/recommendations')
