@@ -19,7 +19,10 @@ const bodyMatchesIAuthenticationRequest = () => [
     icloud_lowercase: true,
     icloud_remove_subaddress: false,
   }),
-  body('password').notEmpty().isLength({ min: 8 }),
+  body('password')
+    .notEmpty()
+    .isLength({ min: 8 })
+    .withMessage('Password must be at least 8 characters long'),
 ];
 
 const router: Router = Router();
@@ -31,7 +34,9 @@ export default (app: Router) => {
   router.post(
     '/signup',
     bodyMatchesIAuthenticationRequest(),
-    body('type').isIn(['fisica', 'moral']),
+    body('type')
+      .isIn(['fisica', 'moral'])
+      .withMessage('Must be either "fisica" or "moral"'),
     handleValidationErrors,
     authController.signUp
   );

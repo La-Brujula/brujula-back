@@ -31,7 +31,8 @@ export const bodyMatchesSearchQuery = [
     .isString()
     .trim()
     .toLowerCase()
-    .isIn(['male', 'female', 'other']),
+    .isIn(['male', 'female', 'other'])
+    .withMessage('Must be either "male", "female", or "other"'),
   query('remote').optional({ values: 'falsy' }).trim().isBoolean().toBoolean(),
   query('type')
     .optional({ values: 'falsy' })
@@ -39,7 +40,8 @@ export const bodyMatchesSearchQuery = [
     .isString()
     .trim()
     .toLowerCase()
-    .isIn(['moral', 'fisica']),
+    .isIn(['moral', 'fisica'])
+    .withMessage('Must be either "moral" or "fisica"'),
   query('language').optional({ values: 'falsy' }).trim().isString().isISO6391(),
   query('university')
     .optional({ values: 'falsy' })
@@ -96,7 +98,11 @@ export const validatePagination = [
 ];
 
 export const validateFieldEnumeration = [
-  param('field').isIn(ENUMERATABLE_FIELDS),
+  param('field')
+    .isIn(ENUMERATABLE_FIELDS)
+    .withMessage(
+      `Must be one of ${ENUMERATABLE_FIELDS.map((field) => '"' + field + '"').join(', ')}`
+    ),
 ];
 
 export const validateProfileCreation = [
@@ -113,7 +119,9 @@ export const validateProfileCreation = [
     icloud_lowercase: true,
     icloud_remove_subaddress: false,
   }),
-  body('type').isIn(['moral', 'fisica']),
+  body('type')
+    .isIn(['moral', 'fisica'])
+    .withMessage('Must be either "moral" or "fisica"'),
 ];
 
 export const validateProfileUpdate = [
@@ -187,12 +195,16 @@ export const validateProfileUpdate = [
     .optional({ values: 'falsy' })
     .trim()
     .isString()
-    .isIn(['basic', 'intermediate', 'advanced', 'native']),
+    .isIn(['basic', 'intermediate', 'advanced', 'native'])
+    .withMessage(
+      'Must be either "basic", "intermediate", "advanced", or "native"'
+    ),
   body('gender')
     .optional({ values: 'falsy' })
     .trim()
     .isString()
-    .isIn(['male', 'female', 'other']),
+    .isIn(['male', 'female', 'other'])
+    .withMessage('Must be either "male", "female", or "other"'),
   body('state')
     .optional({ values: 'falsy' })
     .trim()
@@ -208,7 +220,10 @@ export const validateProfileUpdate = [
   body('workRadius')
     .optional({ values: 'falsy' })
     .trim()
-    .isIn(['local', 'state', 'national', 'international']),
+    .isIn(['local', 'state', 'national', 'international'])
+    .withMessage(
+      'Must be one of "local", "state", "national" or "international"'
+    ),
   body('university')
     .optional({ values: 'falsy' })
     .trim()
@@ -242,8 +257,6 @@ export const validateProfileUpdate = [
     .isString()
     .isLength({ min: 1, max: 60 }),
   body('birthday').optional({ values: 'falsy' }).trim().isISO8601().toDate(),
-  body('profilePictureUrl').optional({ values: 'falsy' }).trim().isURL(),
-  body('headerPictureUrl').optional({ values: 'falsy' }).trim().isURL(),
   body('externalLinks').optional({ values: 'falsy' }).isArray(),
   body('externalLinks.*').optional({ values: 'falsy' }).isURL(),
   ...[

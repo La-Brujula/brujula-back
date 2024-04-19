@@ -3,13 +3,15 @@ import Container from 'typedi';
 import { body } from 'express-validator';
 import AuthenticationController from './contactForm.controllers';
 import handleValidationErrors from '@/shared/utils/handleValidationErrors';
-import authenticateRequest from '@/shared/middleware/authenticateRequest';
 
 const bodyMatchesContactForm = () => [
   body('subject').isString(),
   body('name').isString(),
   body('email').isEmail().normalizeEmail(),
-  body('message').isString().isLength({ max: 512 }),
+  body('message')
+    .isString()
+    .isLength({ max: 512 })
+    .withMessage('The message must be under 512 characters'),
 ];
 
 const router: Router = Router();
