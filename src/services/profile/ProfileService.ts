@@ -38,24 +38,24 @@ export default class ProfileService {
   public async createProfile(
     newAccount: IProfileCreationQuery
   ): Promise<ServiceResponse<IProfileDTO>> {
-    Logger.debug('ProfileService | createProfile | Start');
+    Logger.verbose('ProfileService | createProfile | Start');
     return this.database.sequelize.transaction(async (transaction) => {
-      Logger.debug(
+      Logger.verbose(
         'ProfileService | createProfile | Checking if profile already exists'
       );
       if (await this.profileExistsByEmail(newAccount.email)) {
         throw ProfileErrors.existingProfile;
       }
 
-      Logger.debug('ProfileService | createProfile | Creating profile');
+      Logger.verbose('ProfileService | createProfile | Creating profile');
       const profileRecord = await this.profileRepository.create(
         newAccount,
         transaction
       );
-      Logger.debug('ProfileService | createProfile | Created profile');
+      Logger.verbose('ProfileService | createProfile | Created profile');
 
       const profile = ProfileMapper.toDto(profileRecord);
-      Logger.debug('ProfileService | createProfile | Finished');
+      Logger.verbose('ProfileService | createProfile | Finished');
       return ServiceResponse.ok(profile);
     });
   }
@@ -72,7 +72,7 @@ export default class ProfileService {
       pagination
     );
     const profiles = dbProfiles.map(ProfileMapper.toProfile);
-    Logger.debug('ProfileService | Search | Got results');
+    Logger.verbose('ProfileService | Search | Got results');
     return ServiceResponse.paginate(
       profiles,
       total_profiles,
@@ -84,7 +84,7 @@ export default class ProfileService {
     recommendedById: string,
     recommendationId: string
   ): Promise<ServiceResponse<IProfileDTO>> {
-    Logger.debug('ProfileService | GetFullProfile | Started');
+    Logger.verbose('ProfileService | GetFullProfile | Started');
     return this.database.sequelize.transaction(async (transaction) => {
       const recommendedProfile = await this.getProfileOrThrow(recommendationId);
       await this.getProfileOrThrow(recommendedById);
@@ -103,7 +103,7 @@ export default class ProfileService {
         recommendedById,
         transaction
       );
-      Logger.debug('ProfileService | GetFullProfile | Finished');
+      Logger.verbose('ProfileService | GetFullProfile | Finished');
       await recommendedProfile.save();
       return ServiceResponse.ok(recommendedProfile, 201);
     });
@@ -113,7 +113,7 @@ export default class ProfileService {
     recommendedById: string,
     recommendationId: string
   ): Promise<ServiceResponse<IProfileDTO>> {
-    Logger.debug('ProfileService | GetFullProfile | Started');
+    Logger.verbose('ProfileService | GetFullProfile | Started');
     return this.database.sequelize.transaction(async (transaction) => {
       const recommendedProfile = await this.getProfileOrThrow(recommendationId);
       await this.getProfileOrThrow(recommendedById);
@@ -134,7 +134,7 @@ export default class ProfileService {
         transaction
       );
       await recommendedProfile.save();
-      Logger.debug('ProfileService | GetFullProfile | Finished');
+      Logger.verbose('ProfileService | GetFullProfile | Finished');
       return ServiceResponse.ok(recommendedProfile);
     });
   }
@@ -142,7 +142,7 @@ export default class ProfileService {
   public async enumerateField(
     fieldName: string
   ): Promise<ServiceResponse<IProfileDTO>> {
-    Logger.debug('ProfileService | EnumerateField | Started');
+    Logger.verbose('ProfileService | EnumerateField | Started');
     if (!ENUMERATABLE_FIELDS.includes(fieldName)) {
       throw ProfileErrors.fieldNotAllowed;
     }
@@ -163,14 +163,14 @@ export default class ProfileService {
         valuesList.push(value);
       }
     }
-    Logger.debug('ProfileService | EnumerateField | Finished');
+    Logger.verbose('ProfileService | EnumerateField | Finished');
     return ServiceResponse.ok(valuesList);
   }
 
   public async getFullProfile(
     id: string
   ): Promise<ServiceResponse<IProfileDTO>> {
-    Logger.debug('ProfileService | GetFullProfile | Started');
+    Logger.verbose('ProfileService | GetFullProfile | Started');
 
     const profileDb = await this.profileRepository.findById(id);
     if (profileDb === null) {
@@ -178,7 +178,7 @@ export default class ProfileService {
     }
 
     const profile = ProfileMapper.toProfile(profileDb);
-    Logger.debug('ProfileService | GetFullProfile | Finished');
+    Logger.verbose('ProfileService | GetFullProfile | Finished');
     return ServiceResponse.ok(profile);
   }
 
@@ -186,12 +186,12 @@ export default class ProfileService {
     id: string,
     params: ISearchableProfile & IExtraProfileInformation
   ): Promise<ServiceResponse<IProfile>> {
-    Logger.debug('ProfileService | GetFullProfile | Started');
+    Logger.verbose('ProfileService | GetFullProfile | Started');
     const profile = await this.profileRepository.update(id, params);
     if (profile === null) {
       throw ProfileErrors.profileDoesNotExist;
     }
-    Logger.debug('ProfileService | GetFullProfile | Finished');
+    Logger.verbose('ProfileService | GetFullProfile | Finished');
     return ServiceResponse.ok(profile);
   }
 

@@ -12,17 +12,17 @@ class App {
   }
 
   public loadServer() {
-    Logger.debug('Express: Starting...');
+    Logger.verbose('Express: Starting...');
     Express.init();
   }
 
   public async loadDatabase() {
-    Logger.debug('Database: Connecting...');
+    Logger.verbose('Database: Connecting...');
     await Database.getInstance();
   }
 
   public async loadDependencyInjection() {
-    Logger.debug('Dependency Injector: Starting...');
+    Logger.verbose('Dependency Injector: Starting...');
     await DependencyInjector.init();
   }
 }

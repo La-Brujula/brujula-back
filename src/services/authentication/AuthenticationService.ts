@@ -36,15 +36,15 @@ export default class AuthenticationService {
   public async addAccount(
     newAccount: IAuthenticationRequestBody
   ): Promise<ServiceResponse<IAuthenticationResponseBody>> {
-    Logger.debug('AccountService | addAccount | Start');
-    Logger.debug(
+    Logger.verbose('AccountService | addAccount | Start');
+    Logger.verbose(
       'AccountService | addAccount | Checking if account already exists'
     );
     if (await this.userExists(newAccount.email)) {
       throw AuthenticationErrors.existingAccount;
     }
 
-    Logger.debug('AccountService | addAccount | Hashing password');
+    Logger.verbose('AccountService | addAccount | Hashing password');
     const hashedPassword = hashPassword(newAccount.email, newAccount.password);
 
     let profile = await this.getProfileIdIfExists(newAccount.email);
@@ -56,7 +56,7 @@ export default class AuthenticationService {
       });
     }
 
-    Logger.debug('AccountService | addAccount | Creating account');
+    Logger.verbose('AccountService | addAccount | Creating account');
     const accountRecord = await this.authenticationRepository.create(
       {
         email: newAccount.email,
@@ -65,20 +65,20 @@ export default class AuthenticationService {
       },
       profile
     );
-    Logger.debug('AccountService | addAccount | Created account');
+    Logger.verbose('AccountService | addAccount | Created account');
 
     const account: IAccountDTO = AccountMapper.toDto(accountRecord);
-    Logger.debug('AccountService | addAccount | Generating token');
+    Logger.verbose('AccountService | addAccount | Generating token');
     const token = generateToken(accountRecord, this.tokenSecret);
 
-    Logger.debug('AccountService | addAccount | Finished');
+    Logger.verbose('AccountService | addAccount | Finished');
     return ServiceResponse.ok({ account, token });
   }
 
   public async logIn(
     userInput: IAuthenticationRequestBody
   ): Promise<ServiceResponse<IAuthenticationResponseBody>> {
-    Logger.debug(`AccountService | signIn | Started`);
+    Logger.verbose(`AccountService | signIn | Started`);
     const accountRecord = await this.authenticationRepository.findByEmail(
       userInput.email
     );
@@ -86,31 +86,33 @@ export default class AuthenticationService {
       throw AuthenticationErrors.accountDoesNotExist;
     }
 
-    Logger.debug('AccountService | signIn | Checking password');
+    Logger.verbose('AccountService | signIn | Checking password');
 
     const inputHash = hashPassword(userInput.email, userInput.password);
     if (inputHash != accountRecord.password) {
       throw AuthenticationErrors.wrongCredentials;
     }
 
-    Logger.debug('AccountService | signIn | Password is valid!');
+    Logger.verbose('AccountService | signIn | Password is valid!');
     const account: IAccountDTO = AccountMapper.toDto(accountRecord);
     const token = generateToken(accountRecord, this.tokenSecret);
 
-    Logger.debug(`AccountService | signIn | Finished`);
+    Logger.verbose(`AccountService | signIn | Finished`);
     return ServiceResponse.ok({ account, token });
   }
 
   public async deleteAccount(
     accountInfo: IAccountDTO
   ): Promise<ServiceResponse<boolean>> {
-    Logger.debug('AccountService | deleteAccount | Start');
-    Logger.debug('AccountService | deleteAccount | Checking if account exists');
+    Logger.verbose('AccountService | deleteAccount | Start');
+    Logger.verbose(
+      'AccountService | deleteAccount | Checking if account exists'
+    );
     if (!(await this.userExists(accountInfo.email))) {
       throw AuthenticationErrors.accountDoesNotExist;
     }
 
-    Logger.debug('AccountService | deleteAccount | Deleting account');
+    Logger.verbose('AccountService | deleteAccount | Deleting account');
     const accountDeleted = await this.authenticationRepository.delete(
       accountInfo.email
     );
@@ -120,44 +122,44 @@ export default class AuthenticationService {
     if (!accountDeleted || !profileDeleted) {
       throw AuthenticationErrors.couldNotDeleteAccount;
     }
-    Logger.debug('AccountService | deleteAccount | Deleted account');
-    Logger.debug('AccountService | deleteAccount | Finished');
+    Logger.verbose('AccountService | deleteAccount | Deleted account');
+    Logger.verbose('AccountService | deleteAccount | Finished');
     return new ServiceResponse(accountDeleted, 202);
   }
 
   public async getUser(
     userEmail: string
   ): Promise<ServiceResponse<IAccountDTO>> {
-    Logger.debug(`AccountService | getUser | Started`);
-    Logger.debug('AccountService | getUser | Getting the user by email');
+    Logger.verbose(`AccountService | getUser | Started`);
+    Logger.verbose('AccountService | getUser | Getting the user by email');
     const accountRecord =
       await this.authenticationRepository.findByEmail(userEmail);
     if (!accountRecord) {
       throw AuthenticationErrors.accountDoesNotExist;
     }
-    Logger.debug('AccountService | getUser | Got a user');
+    Logger.verbose('AccountService | getUser | Got a user');
     const account = AccountMapper.toDto(accountRecord);
-    Logger.debug('AccountService | getUser | Finished');
+    Logger.verbose('AccountService | getUser | Finished');
     return ServiceResponse.ok(account);
   }
 
   public async createPasswordResetPin(email: string) {
-    Logger.debug('AccountService | createPasswordResetPin | Started');
-    Logger.debug('AccountService | createPasswordResetPin | Getting user');
+    Logger.verbose('AccountService | createPasswordResetPin | Started');
+    Logger.verbose('AccountService | createPasswordResetPin | Getting user');
     const user = await this.authenticationRepository.findByEmail(email);
 
     if (!user) throw AuthenticationErrors.accountDoesNotExist;
 
-    Logger.debug(
+    Logger.verbose(
       'AccountService | createPasswordResetPin | Checking a new pin can be created'
     );
     if (user.passwordRecoveryAttempts == 3)
       throw AuthenticationErrors.exceededPasswordResetAttempts;
 
-    Logger.debug('AccountService | createPasswordResetPin | Creating pin');
+    Logger.verbose('AccountService | createPasswordResetPin | Creating pin');
     const pin = randomBytes(32).toString('hex');
 
-    Logger.debug('AccountService | createPasswordResetPin | Updating user');
+    Logger.verbose('AccountService | createPasswordResetPin | Updating user');
     await this.authenticationRepository.update(email, {
       passwordResetPin: pin,
       passwordResetPinExpirationTime: new Date(
@@ -174,7 +176,7 @@ export default class AuthenticationService {
         passwordResetLink: passwordResetLink,
       },
     });
-    Logger.debug('AccountService | createPasswordResetPin | Finished');
+    Logger.verbose('AccountService | createPasswordResetPin | Finished');
     return new ServiceResponse(true, 201);
   }
 
@@ -188,28 +190,28 @@ export default class AuthenticationService {
   }
 
   public async changePassword(pin: string, password: string, email: string) {
-    Logger.debug('AccountService | changePassword | Started');
+    Logger.verbose('AccountService | changePassword | Started');
     const user = await this.authenticationRepository.findByEmail(email);
-    Logger.debug('AccountService | changePassword | Checking user exists');
+    Logger.verbose('AccountService | changePassword | Checking user exists');
     if (user === null) {
       throw AuthenticationErrors.accountDoesNotExist;
     }
     if (user.passwordResetPin === null) {
       throw AuthenticationErrors.wrongPasswordResetToken;
     }
-    Logger.debug('AccountService | changePassword | Checking pins match');
+    Logger.verbose('AccountService | changePassword | Checking pins match');
     if (pin != user.passwordResetPin) {
       throw AuthenticationErrors.wrongPasswordResetToken;
     }
 
-    Logger.debug(
+    Logger.verbose(
       "AccountService | changePassword | Checking pin isn't expired"
     );
     if (user.passwordResetPinExpirationTime! < new Date()) {
       throw AuthenticationErrors.passwordResetTokenExpired;
     }
 
-    Logger.debug('AccountService | changePassword | Updating user');
+    Logger.verbose('AccountService | changePassword | Updating user');
     const [userUpdate] = await this.authenticationRepository.update(email, {
       password: hashPassword(email, password),
       passwordRecoveryAttempts: 0,
@@ -218,7 +220,7 @@ export default class AuthenticationService {
     });
 
     if (userUpdate == 0) throw AuthenticationErrors.couldNotChangePassword;
-    Logger.debug('AccountService | changePassword | Finished');
+    Logger.verbose('AccountService | changePassword | Finished');
     const account: IAccountDTO = AccountMapper.toDto(user);
     const token = generateToken(user, this.tokenSecret);
 

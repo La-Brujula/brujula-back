@@ -26,8 +26,7 @@ class ImageUploader {
     const imagePath = `${this.destination}/${fileName}`;
 
     mv(imagePath);
-
-    Logger.debug(`Created file: ${imagePath}`);
+    Logger.verbose(`Created file: ${imagePath}`);
 
     const link = `${this.imageServiceURL}/${fileName}`;
     return { link, ref: fileName };

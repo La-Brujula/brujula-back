@@ -7,6 +7,7 @@ class DependencyInjector {
     try {
       Container.set('database', await Database.getInstance());
       Container.set('logger', Logger);
+      Logger.info('Dependency Injector: Started');
     } catch (err) {
       Logger.error('Failed loading dependency injection');
       throw err;

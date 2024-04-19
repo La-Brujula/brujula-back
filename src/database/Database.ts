@@ -30,7 +30,7 @@ class Database {
       );
     }
 
-    Logger.info(
+    Logger.verbose(
       `Connecting to ${connectionSettings.dialect}:${connectionSettings.database}`
     );
     this.sequelize = new Sequelize({

@@ -74,7 +74,7 @@ class Express {
       return Logger.info(`Server: Listening @ 'http://localhost:${port}'`);
     });
     this.setErrorHandler();
-    Logger.debug('Express: Started');
+    Logger.info('Express: Started');
   }
 }
 

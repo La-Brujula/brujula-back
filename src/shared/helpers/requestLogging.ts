@@ -9,10 +9,10 @@ export default function requestLog(tokens: any, req: Request, res: Response) {
     level,
     [
       req.id,
-      `${tokens['response-time'](req, res)} ms |`,
       statusCode,
       method,
       decodeURIComponent(req.originalUrl),
+      `| ${tokens['response-time'](req, res)} ms`,
     ].join(' ')
   );
   return undefined;

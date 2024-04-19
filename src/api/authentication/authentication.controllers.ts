@@ -18,30 +18,36 @@ export default class AuthenticationController {
 
   public logIn = handleAsync(async (req: Request, res: Response) => {
     const userInput: IAuthenticationRequestBody = req.body;
-    Logger.debug('AuthenticationController | LogIn | Start');
+    Logger.verbose(req.id + ' | ' + 'AuthenticationController | LogIn | Start');
     const accountsLoginResponse: ServiceResponse<IAuthenticationResponseBody> =
       await this.authService.logIn(userInput);
     if (!accountsLoginResponse.isSuccess) {
       sendResponse(res, accountsLoginResponse);
     }
-    Logger.debug('AuthenticationController | LogIn | End');
+    Logger.verbose(req.id + ' | ' + 'AuthenticationController | LogIn | End');
     return sendResponse(res, accountsLoginResponse);
   });
 
   public signUp = handleAsync(async (req: Request, res: Response) => {
-    Logger.debug('AuthenticationController | SignUp | Start');
+    Logger.verbose(
+      req.id + ' | ' + 'AuthenticationController | SignUp | Start'
+    );
     const userInput: IAuthenticationRequestBody = req.body;
     const accountsSignUpResponse: ServiceResponse<IAuthenticationResponseBody> =
       await this.authService.addAccount(userInput);
-    Logger.debug('AuthenticationController | SignUp | End');
+    Logger.verbose(req.id + ' | ' + 'AuthenticationController | SignUp | End');
     return sendResponse(res, accountsSignUpResponse);
   });
 
   public deleteAccount = handleAsync(async (req: Request, res: Response) => {
-    Logger.debug('AuthenticationController | DeleteAccount | Start');
+    Logger.verbose(
+      req.id + ' | ' + 'AuthenticationController | DeleteAccount | Start'
+    );
     const accountsDeleteAccountResponse: ServiceResponse<boolean> =
       await this.authService.deleteAccount(req.user);
-    Logger.debug('AuthenticationController | DeleteAccount | End');
+    Logger.verbose(
+      req.id + ' | ' + 'AuthenticationController | DeleteAccount | End'
+    );
     return sendResponse(res, accountsDeleteAccountResponse);
   });
 
@@ -67,10 +73,10 @@ export default class AuthenticationController {
   });
 
   public me = handleAsync(async (req: Request, res: Response) => {
-    Logger.debug('AuthenticationController | Me | Start');
+    Logger.verbose(req.id + ' | ' + 'AuthenticationController | Me | Start');
     const accountMeResponse: ServiceResponse<IAccountDTO> =
       await this.authService.getUser(req.user.email);
-    Logger.debug('AuthenticationController | Me | End');
+    Logger.verbose(req.id + ' | ' + 'AuthenticationController | Me | End');
     return sendResponse(res, accountMeResponse);
   });
 }
