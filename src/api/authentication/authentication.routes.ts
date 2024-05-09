@@ -4,6 +4,7 @@ import { body } from 'express-validator';
 import AuthenticationController from './authentication.controllers';
 import handleValidationErrors from '@/shared/utils/handleValidationErrors';
 import authenticateRequest from '@/shared/middleware/authenticateRequest';
+import isAdmin from '@/shared/middleware/isAdmin';
 
 const bodyMatchesIAuthenticationRequest = () => [
   body('email').isEmail().normalizeEmail({
@@ -82,4 +83,11 @@ export default (app: Router) => {
     .route('/me')
     .get(authController.me)
     .delete(authController.deleteAccount);
+
+  router.post(
+    '/sendResetEmail',
+    isAdmin,
+    body('email').isEmail(),
+    authController.sendMigrationPasswordReset
+  );
 };

@@ -180,6 +180,36 @@ export default class AuthenticationService {
     return new ServiceResponse(true, 201);
   }
 
+  public async sendMigrateAccountEmail(email: string) {
+    Logger.verbose('AccountService | sendMigrateAccountEmail | Started');
+    Logger.verbose('AccountService | sendMigrateAccountEmail | Getting user');
+    const user = await this.authenticationRepository.findByEmail(email);
+
+    if (!user) throw AuthenticationErrors.accountDoesNotExist;
+
+    Logger.verbose('AccountService | sendMigrateAccountEmail | Creating pin');
+    const pin = randomBytes(32).toString('hex');
+
+    Logger.verbose('AccountService | sendMigrateAccountEmail | Updating user');
+    await this.authenticationRepository.update(email, {
+      passwordResetPin: pin,
+      passwordResetPinExpirationTime: new Date(
+        new Date().valueOf() + 7 * 24 * 60 * 60 * 1000
+      ),
+    });
+
+    const passwordResetLink = `${config.application.frontend_url}/auth/new-password?code=${pin}&email=${email}`;
+
+    await sendEmail(email, 'Te damos la bienvenida a La Brújula 2024', {
+      template: 'migrationNotice',
+      context: {
+        passwordResetLink: passwordResetLink,
+      },
+    });
+    Logger.verbose('AccountService | sendMigrateAccountEmail | Finished');
+    return new ServiceResponse(true, 201);
+  }
+
   private async userExists(userEmail: string) {
     const user = await this.authenticationRepository.findByEmail(userEmail);
     return !!user;

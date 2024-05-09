@@ -60,6 +60,15 @@ export default class AuthenticationController {
       return sendResponse(res, accountsPasswordResetResponse);
     }
   );
+  public sendMigrationPasswordReset = handleAsync(
+    async (req: Request, res: Response) => {
+      const { email } = req.body;
+      const accountsPasswordResetResponse =
+        await this.authService.sendMigrateAccountEmail(email);
+
+      return sendResponse(res, accountsPasswordResetResponse);
+    }
+  );
 
   public resetPassword = handleAsync(async (req: Request, res: Response) => {
     const { email, password, code } = req.body;
