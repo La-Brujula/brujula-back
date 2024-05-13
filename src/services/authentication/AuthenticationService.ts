@@ -163,7 +163,7 @@ export default class AuthenticationService {
     await this.authenticationRepository.update(email, {
       passwordResetPin: pin,
       passwordResetPinExpirationTime: new Date(
-        new Date().valueOf() + 15 * 60 * 1000
+        new Date().valueOf() + 45 * 60 * 1000
       ),
       passwordRecoveryAttempts: user.passwordRecoveryAttempts + 1,
     });
