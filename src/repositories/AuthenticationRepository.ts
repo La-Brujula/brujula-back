@@ -40,6 +40,7 @@ export class AccountRepository {
     return (
       (await this.accountRepo.destroy({
         where: { email },
+        force: true,
       })) == 1
     );
   }

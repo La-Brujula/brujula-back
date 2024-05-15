@@ -274,7 +274,9 @@ export class ProfileRepository {
   }
 
   async delete(id: string, transaction?: Transaction) {
-    return (await this.db.destroy({ where: { id }, transaction })) > 0;
+    return (
+      (await this.db.destroy({ where: { id }, transaction, force: true })) > 0
+    );
   }
 
   async update(
