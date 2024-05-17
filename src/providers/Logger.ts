@@ -51,7 +51,7 @@ if (process.env.NODE_ENV !== 'production') {
     new winston.transports.File({
       filename: 'combined.log',
       format: combine(uncolorize(), timestamp(), json()),
-      level: 'info',
+      level: config.logs.level,
     })
   );
 }
