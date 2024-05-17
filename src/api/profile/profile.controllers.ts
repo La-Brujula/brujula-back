@@ -22,7 +22,7 @@ export default class ProfileController {
     const imageSaveResult = await ImageUploader.saveImage(
       req,
       'image',
-      req.user.ProfileId + 'pp'
+      req.user.ProfileId + 'pp' + new Date().toISOString()
     );
     if (imageSaveResult === false) throw Error('Could not process image');
 
@@ -37,7 +37,7 @@ export default class ProfileController {
     const imageSaveResult = await ImageUploader.saveImage(
       req,
       'image',
-      req.user.ProfileId + 'cover'
+      req.user.ProfileId + 'cover' + new Date().toISOString()
     );
     if (imageSaveResult === false) throw Error('Could not process image');
 
