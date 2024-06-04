@@ -38,6 +38,7 @@ export default (app: Router) => {
     body('type')
       .isIn(['fisica', 'moral'])
       .withMessage('Must be either "fisica" or "moral"'),
+    body('referal').optional().isString(),
     handleValidationErrors,
     authController.signUp
   );

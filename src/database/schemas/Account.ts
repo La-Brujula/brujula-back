@@ -26,6 +26,7 @@ export default class Account extends Model implements IAccount {
   email!: string;
 
   @Column password!: string;
+  @Column referal!: string;
 
   @Column(DataType.ENUM('user', 'editor', 'manager', 'admin'))
   role!: AccountRoleTypes;

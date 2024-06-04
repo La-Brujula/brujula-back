@@ -3,6 +3,7 @@ import {
   IAuthenticationRequestBody,
   IAuthenticationResponseBody,
   IAccountDTO,
+  ISignupRequestBody,
 } from '@/models/authentication/authentication';
 import { AccountRepository } from '@/repositories/AuthenticationRepository';
 import { ServiceResponse } from '@/shared/classes/serviceResponse';
@@ -34,7 +35,7 @@ export default class AuthenticationService {
   }
 
   public async addAccount(
-    newAccount: IAuthenticationRequestBody
+    newAccount: ISignupRequestBody
   ): Promise<ServiceResponse<IAuthenticationResponseBody>> {
     Logger.verbose('AccountService | addAccount | Start');
     Logger.verbose(
@@ -62,6 +63,7 @@ export default class AuthenticationService {
         email: newAccount.email,
         password: hashedPassword,
         type: newAccount.type,
+        referal: newAccount.referal,
       },
       profile
     );
@@ -82,7 +84,7 @@ export default class AuthenticationService {
     const accountRecord = await this.authenticationRepository.findByEmail(
       userInput.email
     );
-    if (!accountRecord) {
+    if (accountRecord === null) {
       throw AuthenticationErrors.accountDoesNotExist;
     }
 
@@ -94,8 +96,8 @@ export default class AuthenticationService {
     }
 
     Logger.verbose('AccountService | signIn | Password is valid!');
-    const account: IAccountDTO = AccountMapper.toDto(accountRecord);
     const token = generateToken(accountRecord, this.tokenSecret);
+    const account: IAccountDTO = AccountMapper.toDto(accountRecord);
 
     Logger.verbose(`AccountService | signIn | Finished`);
     return ServiceResponse.ok({ account, token });

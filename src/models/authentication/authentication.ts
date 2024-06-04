@@ -8,6 +8,7 @@ export interface IAccount {
   passwordResetPin?: string;
   passwordRecoveryAttempts: number;
   ProfileId: string;
+  referal?: string;
 }
 
 export interface IUpdateAccount {
@@ -28,6 +29,12 @@ export interface IAuthenticationRequestBody {
   email: string;
   password: string;
   type?: 'moral' | 'fisica';
+}
+export interface ISignupRequestBody {
+  email: string;
+  password: string;
+  type?: 'moral' | 'fisica';
+  referal?: string;
 }
 
 export interface IAuthenticationResponseBody {

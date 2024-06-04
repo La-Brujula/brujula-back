@@ -2,8 +2,8 @@ import {
   IAccountDTO,
   IAuthenticationRequestBody,
   IAuthenticationResponseBody,
+  ISignupRequestBody,
 } from '@/models/authentication/authentication';
-import { sendEmail } from '@/providers/Emailer';
 import Logger from '@/providers/Logger';
 import AuthenticationService from '@/services/authentication/AuthenticationService';
 import { ServiceResponse } from '@/shared/classes/serviceResponse';
@@ -32,7 +32,7 @@ export default class AuthenticationController {
     Logger.verbose(
       req.id + ' | ' + 'AuthenticationController | SignUp | Start'
     );
-    const userInput: IAuthenticationRequestBody = req.body;
+    const userInput: ISignupRequestBody = req.body;
     const accountsSignUpResponse: ServiceResponse<IAuthenticationResponseBody> =
       await this.authService.addAccount(userInput);
     Logger.verbose(req.id + ' | ' + 'AuthenticationController | SignUp | End');
