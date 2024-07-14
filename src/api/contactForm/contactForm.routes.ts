@@ -7,7 +7,7 @@ import handleValidationErrors from '@/shared/utils/handleValidationErrors';
 const bodyMatchesContactForm = () => [
   body('subject').isString(),
   body('name').isString(),
-  body('email').isEmail().normalizeEmail(),
+  body('email').isEmail(),
   body('message')
     .isString()
     .isLength({ max: 512 })
