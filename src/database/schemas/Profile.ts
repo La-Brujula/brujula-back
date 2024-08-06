@@ -3,9 +3,7 @@ import {
   AfterCreate,
   AfterDestroy,
   AllowNull,
-  BeforeFind,
   BeforeSave,
-  BeforeSync,
   BelongsToMany,
   Column,
   CreatedAt,
@@ -24,6 +22,8 @@ import {
 } from 'sequelize-typescript';
 import { UUIDV4 } from 'sequelize';
 import { ProfileMapper } from '@/models/profile/profileMapper';
+
+import IdReferents from '@shared/constants/idToKeywords.json';
 
 const ACTIVITY_REGEX = /\d{3}-\d{2}/;
 
@@ -192,17 +192,22 @@ export default class Profile extends Model implements IProfile {
     );
     user.searchString = [
       user.get('fullName'),
-      user.get('nickname'),
+      user.get('nickName'),
       user.get('primaryEmail'),
       user.get('secondaryEmails'),
       user.get('phoneNumbers'),
-      user.get('primaryActivity'),
-      user.get('secondaryActivity'),
-      user.get('thirdActivity'),
       user.get('location'),
-      user.get('certifications'),
-      user.get('associations'),
-      user.get('university'),
+      ...new Set(
+        [
+          user.get('primaryActivity'),
+          user.get('secondaryActivity'),
+          user.get('thirdActivity'),
+        ].map((activity) =>
+          !!activity && activity in IdReferents
+            ? IdReferents[activity as keyof typeof IdReferents]
+            : null
+        )
+      ),
     ]
       .flat()
       .filter((a) => !!a)

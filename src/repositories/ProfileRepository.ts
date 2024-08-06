@@ -141,6 +141,7 @@ export class ProfileRepository {
   buildTextSearchQuery(query: string) {
     return fn(
       'GREATEST',
+      fn('WORD_SIMILARITY', query, col('searchString')),
       fn(
         'WORD_SIMILARITY',
         query,
@@ -184,7 +185,7 @@ export class ProfileRepository {
               fn(
                 'WORD_SIMILARITY',
                 name,
-                this.concatColumns('firstName', 'nickname', 'lastName')
+                this.concatColumns('firstName', 'nickName', 'lastName')
               ),
               Op.gte,
               0.3

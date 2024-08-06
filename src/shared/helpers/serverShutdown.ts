@@ -1,4 +1,3 @@
-import { Server } from 'http';
 import Database from '@/database/Database';
 
 export default async function shutdownServer(error?: Error) {
