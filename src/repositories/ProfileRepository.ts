@@ -139,19 +139,15 @@ export class ProfileRepository {
   }
 
   buildTextSearchQuery(query: string) {
-    return fn(
-      'GREATEST',
-      fn('WORD_SIMILARITY', query, col('searchString')),
-      fn(
-        'WORD_SIMILARITY',
-        query,
-        this.concatColumns('firstName', 'nickName', 'lastName')
-      ),
-      fn(
-        'WORD_SIMILARITY',
-        query,
-        this.concatColumns('city', 'state', 'country', 'postalCode')
-      )
+    return literal(
+      '(' +
+        [
+          `strict_word_similarity('${query}', "searchString")`,
+          `SIMILARITY('${query}', CONCAT("firstName", "lastName"))`,
+          `SIMILARITY('${query}', "nickName")`,
+          `strict_word_similarity('${query}', CONCAT("city", "state", "country", "postalCode"))`,
+        ].join(' + ') +
+        ')'
     );
   }
 
