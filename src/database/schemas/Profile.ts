@@ -3,7 +3,7 @@ import {
   AfterCreate,
   AfterDestroy,
   AllowNull,
-  BeforeSave,
+  BeforeUpdate,
   BelongsToMany,
   Column,
   CreatedAt,
@@ -184,34 +184,35 @@ export default class Profile extends Model implements IProfile {
   @DeletedAt
   deletedAt!: Date;
 
-  @BeforeSave
+  @BeforeUpdate
   static async updateVector(user: Profile) {
-    user.recommendationsCount = await user.$count('recommendations');
-    user.searchable = ['primaryActivity', 'firstName', 'gender'].every(
-      (p) => !!user.get(p)
+    user.setDataValue(
+      'recommendationsCount',
+      await user.$count('recommendations')
     );
-    user.searchString = [
-      user.get('fullName'),
-      user.get('nickName'),
-      user.get('primaryEmail'),
-      user.get('secondaryEmails'),
-      user.get('phoneNumbers'),
-      user.get('location'),
-      ...new Set(
-        [
-          user.get('primaryActivity'),
-          user.get('secondaryActivity'),
-          user.get('thirdActivity'),
-        ].map((activity) =>
-          !!activity && activity in IdReferents
-            ? IdReferents[activity as keyof typeof IdReferents]
-            : null
-        )
-      ),
-    ]
-      .flat()
-      .filter((a) => !!a)
-      .join(' ');
+    user.setDataValue(
+      'searchable',
+      ['primaryActivity', 'firstName', 'gender'].every((p) => !!user.get(p))
+    );
+    user.setDataValue(
+      'searchString',
+      [
+        ...new Set(
+          [
+            user.get('primaryActivity'),
+            user.get('secondaryActivity'),
+            user.get('thirdActivity'),
+          ].map((activity) =>
+            !!activity && activity in IdReferents
+              ? IdReferents[activity as keyof typeof IdReferents]
+              : null
+          )
+        ),
+      ]
+        .flat()
+        .filter((a) => !!a)
+        .join(' ')
+    );
   }
 
   toDTO() {

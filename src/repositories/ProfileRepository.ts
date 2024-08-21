@@ -142,10 +142,9 @@ export class ProfileRepository {
     return literal(
       '(' +
         [
-          `strict_word_similarity('${query}', "searchString")`,
-          `SIMILARITY('${query}', CONCAT("firstName", "lastName"))`,
-          `SIMILARITY('${query}', "nickName")`,
-          `strict_word_similarity('${query}', CONCAT("city", "state", "country", "postalCode"))`,
+          `strict_word_similarity('${query}', "searchString") * 4`,
+          `word_similarity('${query}', CONCAT("firstName", "lastName", "nickName")) * 3`,
+          `strict_word_similarity('${query}', CONCAT("city", "state", "country", "postalCode")) * 2`,
         ].join(' + ') +
         ')'
     );
@@ -175,16 +174,16 @@ export class ProfileRepository {
           !email && {
             searchable: true,
           },
-          !!query && where(this.buildTextSearchQuery(query), Op.gte, 0.4),
+          !!query && where(this.buildTextSearchQuery(query), Op.gte, 0.9),
           !!name &&
             where(
               fn(
                 'WORD_SIMILARITY',
                 name,
-                this.concatColumns('firstName', 'nickName', 'lastName')
+                this.concatColumns('firstName', 'lastName', 'nickName')
               ),
               Op.gte,
-              0.3
+              0.5
             ),
           !!activity && {
             [Op.or]: [
