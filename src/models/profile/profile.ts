@@ -11,6 +11,7 @@ export interface IBasicProfile {
   searchable: boolean;
   subscriber: boolean;
   recommendationsCount: number;
+  verified?: boolean;
 }
 
 export interface ISearchableProfile {
@@ -55,6 +56,7 @@ export interface IExtraProfileInformation {
   tiktok?: string;
   profilePictureUrl?: string;
   headerPictureUrl?: string;
+  verified?: boolean;
 }
 
 export interface IProfileDTO {
@@ -73,6 +75,7 @@ export interface IProfileDTO {
   profilePictureUrl?: string;
   headerPictureUrl?: string;
   headline?: string;
+  verified?: boolean;
 }
 
 export interface IRecommendedBy {

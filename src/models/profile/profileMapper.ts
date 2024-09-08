@@ -24,6 +24,7 @@ export class ProfileMapper implements IMapper<IProfile> {
       profilePictureUrl: profile.profilePictureUrl,
       headerPictureUrl: profile.headerPictureUrl,
       headline: profile.headline,
+      verified: profile.verified,
     };
   }
   static toProfile(profile: Profile): IProfile {
@@ -78,6 +79,7 @@ export class ProfileMapper implements IMapper<IProfile> {
       whatsapp: profile.whatsapp,
       workRadius: profile.workRadius,
       youtube: profile.youtube,
+      verified: profile.verified,
     };
   }
   static toBasicProfile(profile: Profile): IBasicProfile {
@@ -92,6 +94,7 @@ export class ProfileMapper implements IMapper<IProfile> {
       subscriber: profile.subscriber,
       recommendationsCount: profile.recommendationsCount,
       fullName: profile.fullName,
+      verified: profile.verified,
     };
   }
 }

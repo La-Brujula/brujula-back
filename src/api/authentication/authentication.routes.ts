@@ -5,6 +5,7 @@ import AuthenticationController from './authentication.controllers';
 import handleValidationErrors from '@/shared/utils/handleValidationErrors';
 import authenticateRequest from '@/shared/middleware/authenticateRequest';
 import isAdmin from '@/shared/middleware/isAdmin';
+import EmailVerificationRoutes from './emailVerification';
 
 const bodyMatchesIAuthenticationRequest = () => [
   body('email').isEmail(),
@@ -17,6 +18,7 @@ const bodyMatchesIAuthenticationRequest = () => [
 const router: Router = Router();
 export default (app: Router) => {
   app.use('/auth', router);
+  EmailVerificationRoutes(router);
 
   const authController = Container.get(AuthenticationController);
 
@@ -43,6 +45,13 @@ export default (app: Router) => {
     [body('email').isEmail()],
     handleValidationErrors,
     authController.sendPasswordReset
+  );
+  router.patch(
+    '/resetPassword',
+    bodyMatchesIAuthenticationRequest(),
+    body('code').isString(),
+    handleValidationErrors,
+    authController.resetPassword
   );
   router.patch(
     '/resetPassword',

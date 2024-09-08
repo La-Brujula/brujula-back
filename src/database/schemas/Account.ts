@@ -8,6 +8,7 @@ import {
   Column,
   CreatedAt,
   DataType,
+  Default,
   DeletedAt,
   ForeignKey,
   IsEmail,
@@ -38,6 +39,10 @@ export default class Account extends Model implements IAccount {
   @Column passwordResetPinExpirationTime?: Date;
 
   @Column passwordResetPin?: string;
+
+  @Column emailVerificationPinExpirationTime?: Date;
+
+  @Column emailVerificationPin?: string;
 
   @ForeignKey(() => Profile)
   @Column

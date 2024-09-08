@@ -212,6 +212,69 @@ export default class AuthenticationService {
     return new ServiceResponse(true, 201);
   }
 
+  public async sendVerificationEmail(email: string) {
+    Logger.verbose('AccountService | sendVerificationEmail | Started');
+    Logger.verbose('AccountService | sendVerificationEmail | Creating pin');
+    const pin = randomBytes(16).toString('hex');
+
+    Logger.verbose('AccountService | sendVerificationEmail | Updating user');
+    await this.authenticationRepository.update(email, {
+      emailVerificationPin: pin,
+      emailVerificationPinExpirationTime: new Date(
+        new Date().valueOf() + 30 * 60 * 1000
+      ),
+    });
+
+    const verifyEmailLink = `${config.application.frontend_url}/auth/verify-email?code=${pin}`;
+
+    await sendEmail(email, 'Verifica tu correo de La Brújula', {
+      template: 'emailVerification',
+      context: {
+        verifyEmailLink: verifyEmailLink,
+      },
+    });
+    Logger.verbose('AccountService | sendVerificationEmail | Finished');
+    return new ServiceResponse(true, 201, undefined, verifyEmailLink);
+  }
+
+  public async verifyEmail(email: string, code: string) {
+    Logger.verbose('AccountService | verifyEmail | Started');
+    Logger.verbose('AccountService | verifyEmail | Creating pin');
+
+    const user = await this.authenticationRepository.findByEmail(email);
+    if (user === null) {
+      throw AuthenticationErrors.accountDoesNotExist;
+    }
+
+    if (!user.emailVerificationPin) {
+      throw AuthenticationErrors.verificationCodeNotFound;
+    }
+    const expirationTimestamp =
+      user?.emailVerificationPinExpirationTime?.valueOf();
+
+    if (expirationTimestamp === undefined) {
+      throw AuthenticationErrors.cantVerifyCodeExpiration;
+    }
+    if (expirationTimestamp < new Date().valueOf()) {
+      throw AuthenticationErrors.emailVerificationExpired;
+    }
+
+    if (user.emailVerificationPin !== code) {
+      throw AuthenticationErrors.emailVerificationExpired;
+    }
+
+    Logger.verbose('AccountService | verifyEmail | Updating user');
+    await this.authenticationRepository.update(email, {
+      emailVerificationPin: undefined,
+      emailVerificationPinExpirationTime: undefined,
+    });
+    await this.profileRepository.update(user.ProfileId, {
+      verified: true,
+    });
+    Logger.verbose('AccountService | verifyEmail | Finished');
+    return new ServiceResponse(true, 200);
+  }
+
   private async userExists(userEmail: string) {
     const user = await this.authenticationRepository.findByEmail(userEmail);
     return !!user;

@@ -106,6 +106,10 @@ export default class Profile extends Model implements IProfile {
   @Column(DataType.ARRAY(DataType.STRING))
   externalLinks?: string[];
 
+  @Default(false)
+  @Column
+  verified!: boolean;
+
   @Column whatsapp?: string;
   @Column imdb?: string;
   @Column facebook?: string;

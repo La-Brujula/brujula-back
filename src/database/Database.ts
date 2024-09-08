@@ -69,7 +69,6 @@ class Database {
       storage: new SequelizeStorage({ sequelize: this.sequelize }),
       logger: Logger,
     });
-
     umzug.up({
       migrations: (await umzug.pending()).map((m) => m.name),
       rerun: 'SKIP',

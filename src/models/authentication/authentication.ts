@@ -8,6 +8,8 @@ export interface IAccount {
   passwordResetPin?: string;
   passwordRecoveryAttempts: number;
   ProfileId: string;
+  emailVerificationPinExpirationTime?: Date;
+  emailVerificationPin?: string;
   referal?: string;
 }
 
@@ -17,6 +19,8 @@ export interface IUpdateAccount {
   passwordResetPinExpirationTime?: Date | null;
   passwordResetPin?: string | null;
   passwordRecoveryAttempts?: number;
+  emailVerificationPinExpirationTime?: Date;
+  emailVerificationPin?: string;
 }
 
 export interface IAccountDTO {
