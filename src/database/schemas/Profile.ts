@@ -120,6 +120,9 @@ export default class Profile extends Model implements IProfile {
   @Column twitter?: string;
   @Column tiktok?: string;
   @Column headline?: string;
+  @Column companyName?: string;
+  @Column jobTitle?: string;
+  @Column nationality?: string;
 
   @Column state?: string;
   @Column city?: string;

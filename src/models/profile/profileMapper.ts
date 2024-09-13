@@ -80,6 +80,9 @@ export class ProfileMapper implements IMapper<IProfile> {
       workRadius: profile.workRadius,
       youtube: profile.youtube,
       verified: profile.verified,
+      companyName: profile.companyName,
+      jobTitle: profile.jobTitle,
+      nationality: profile.nationality,
     };
   }
   static toBasicProfile(profile: Profile): IBasicProfile {

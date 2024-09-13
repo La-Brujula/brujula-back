@@ -57,6 +57,9 @@ export interface IExtraProfileInformation {
   profilePictureUrl?: string;
   headerPictureUrl?: string;
   verified?: boolean;
+  companyName?: string;
+  jobTitle?: string;
+  nationality?: string;
 }
 
 export interface IProfileDTO {

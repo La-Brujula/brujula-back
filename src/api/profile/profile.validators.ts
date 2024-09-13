@@ -211,6 +211,17 @@ export const validateProfileUpdate = [
     .trim()
     .isString()
     .isLength({ min: 1, max: 60 }),
+  body('companyName')
+    .optional({ values: 'falsy' })
+    .trim()
+    .isString()
+    .isLength({ min: 1, max: 60 }),
+  body('jobTitle')
+    .optional({ values: 'falsy' })
+    .trim()
+    .isString()
+    .isLength({ min: 1, max: 60 }),
+  body('nationality').optional({ values: 'falsy' }).trim().isISO31661Alpha2(),
   body('birthday').optional({ values: 'falsy' }).trim().isISO8601().toDate(),
   body('externalLinks').optional({ values: 'falsy' }).isArray(),
   body('externalLinks.*').optional({ values: 'falsy' }).isURL(),
