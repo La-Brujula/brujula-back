@@ -42,6 +42,13 @@ export default (app: Router) => {
     profileController.create
   );
 
+  router.get(
+    '/export',
+    isAdmin,
+    bodyMatchesSearchQuery,
+    handleValidationErrors,
+    profileController.getAllMatchingProfiles
+  );
   router
     .route('/me')
     .all(authenticateRequest)

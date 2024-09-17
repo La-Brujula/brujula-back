@@ -54,6 +54,16 @@ export default class ProfileController {
     return sendResponse(res, searchResults);
   });
 
+  public getAllMatchingProfiles = handleAsync(
+    async (req: Request, res: Response) => {
+      const query: IProfileSearchQuery & IPaginationParams = req.body;
+      // @ts-ignore
+      query.limit = 1000000;
+      const searchResults = await this.profileService.search(query);
+      return sendResponse(res, searchResults);
+    }
+  );
+
   public updateMe = handleAsync(async (req: Request, res: Response) => {
     const { ProfileId } = req.user;
     const newProfileInfo: ISearchableProfile & IExtraProfileInformation =

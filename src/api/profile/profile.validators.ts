@@ -69,15 +69,15 @@ export const validatePagination = [
   query('limit')
     .optional({ values: 'falsy' })
     .trim()
+    .toInt()
     .isInt({ min: 1, max: 10 })
-    .default(10)
-    .toInt(),
+    .default(10),
   query('offset')
     .optional({ values: 'falsy' })
     .trim()
+    .toInt()
     .isInt({ min: 0 })
-    .default(0)
-    .toInt(),
+    .default(0),
 ];
 
 export const validateFieldEnumeration = [
