@@ -44,6 +44,7 @@ export default (app: Router) => {
 
   router.get(
     '/export',
+    authenticateRequest,
     isAdmin,
     bodyMatchesSearchQuery,
     handleValidationErrors,
