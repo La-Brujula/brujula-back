@@ -21,6 +21,7 @@ export class ProfileMapper implements IMapper<IProfile> {
       thirdActivity: profile.thirdActivity,
       gender: profile.gender,
       location: profile.location,
+      country: profile.country,
       profilePictureUrl: profile.profilePictureUrl,
       headerPictureUrl: profile.headerPictureUrl,
       headline: profile.headline,

@@ -75,6 +75,7 @@ export interface IProfileDTO {
   thirdActivity?: string;
   gender?: 'male' | 'female' | 'other';
   location?: string;
+  country?: string;
   profilePictureUrl?: string;
   headerPictureUrl?: string;
   headline?: string;
