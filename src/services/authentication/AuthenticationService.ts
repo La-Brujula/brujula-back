@@ -225,7 +225,7 @@ export default class AuthenticationService {
       ),
     });
 
-    const verifyEmailLink = `${config.application.frontend_url}/auth/verify-email?code=${pin}`;
+    const verifyEmailLink = `${config.application.frontend_url}/auth/verify-email?code=${pin}&email=${email}`;
 
     await sendEmail(email, 'Verifica tu correo de La Brújula', {
       template: 'emailVerification',
