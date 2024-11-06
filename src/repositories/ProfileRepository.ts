@@ -141,11 +141,14 @@ export class ProfileRepository {
   buildTextSearchQuery(query: string) {
     return literal(
       '(' +
-        [
-          `strict_word_similarity('${query}', "searchString") * 4`,
-          `word_similarity('${query}', CONCAT("firstName", "lastName", "nickName")) * 3`,
-          `strict_word_similarity('${query}', CONCAT("city", "state", "country", "postalCode")) * 2`,
-        ].join(' + ') +
+        query
+          .split(' ')
+          .flatMap((word) => [
+            `strict_word_similarity('${word}', "searchString") * 4`,
+            `word_similarity('${word}', CONCAT("firstName", "lastName", "nickName")) * 3`,
+            `strict_word_similarity('${word}', CONCAT("city", "state", "country", "postalCode")) * 2`,
+          ])
+          .join(' + ') +
         ')'
     );
   }
