@@ -57,6 +57,8 @@ export default class AuthenticationService {
       });
     }
 
+    this.sendVerificationEmail(newAccount.email);
+
     Logger.verbose('AccountService | addAccount | Creating account');
     const accountRecord = await this.authenticationRepository.create(
       {
