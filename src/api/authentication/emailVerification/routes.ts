@@ -6,8 +6,9 @@ import EmailVerificationController from './controllers';
 import rateLimit from 'express-rate-limit';
 import handleValidationErrors from '@/shared/utils/handleValidationErrors';
 
-const bodyHasCode = () => [
+const verifyRequestBody = [
   body('code').notEmpty().bail().isString().isLength({ min: 32, max: 32 }),
+  body('email').notEmpty().bail().isString().isEmail(),
 ];
 
 const router: Router = Router();
@@ -32,7 +33,7 @@ export default (app: Router) => {
   );
   router.post(
     '/verify',
-    bodyHasCode(),
+    verifyRequestBody,
     handleValidationErrors,
     emailVerificationController.verifyEmail
   );
