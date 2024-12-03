@@ -7,6 +7,7 @@ import imageTestRoutes from '@/api/images/imageTest.routes';
 import profileRoutes from '@/api/profile/profile.routes';
 import errorReportingRoutes from '@/api/errorReporting/errorReporting.routes';
 import contactFormRoutes from '@/api/contactForm/contactForm.routes';
+import jobsRoutes from '@/api/jobs/jobs.routes';
 
 class Routes {
   public setApiRoutes(_express: Application): void {
@@ -19,8 +20,9 @@ class Routes {
     app.use(cors());
 
     authenticationRoutes(app);
-    imageTestRoutes(app);
+    jobsRoutes(app);
     profileRoutes(app);
+    imageTestRoutes(app);
     errorReportingRoutes(app);
     contactFormRoutes(app);
   }

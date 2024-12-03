@@ -6,6 +6,7 @@ import { Umzug, SequelizeStorage } from 'umzug';
 
 import Account from './schemas/Account';
 import Profile, { ProfileRecommendations } from './schemas/Profile';
+import Job, { JobOpening } from './schemas/Job';
 
 @Service('Database')
 class Database {
@@ -43,7 +44,7 @@ class Database {
       logging: (msg) => Logger.debug(msg),
       port: connectionSettings.port,
       repositoryMode: true,
-      models: [Account, Profile, ProfileRecommendations],
+      models: [Account, Profile, ProfileRecommendations, Job, JobOpening],
     });
     try {
       await this.sequelize.authenticate();

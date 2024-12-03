@@ -69,7 +69,8 @@ export class ServiceResponse<T> {
   public static paginate<U>(
     items: U[],
     totalItems: number,
-    offset: number
+    offset: number,
+    limit?: number
   ): ServiceResponse<U[]> {
     return new ServiceResponse<U[]>(
       true,
@@ -78,7 +79,7 @@ export class ServiceResponse<T> {
       items || [],
       'OK',
       totalItems || 0,
-      items.length || 0,
+      limit || items.length || 0,
       offset || 0
     );
   }

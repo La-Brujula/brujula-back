@@ -1,5 +1,6 @@
 import { ENUMERATABLE_FIELDS } from '@/models/profile/profile';
 import { body, param, query } from 'express-validator';
+import { z } from 'zod';
 
 export const bodyMatchesSearchQuery = [
   query('query')
@@ -65,6 +66,10 @@ export const bodyMatchesSearchQuery = [
   query('email').optional({ values: 'falsy' }).trim().isString().isEmail(),
 ];
 
+export const zodValidatePagination = {
+  limit: z.optional(z.number({ coerce: true }).min(1).max(10).catch(10)),
+  offset: z.optional(z.number({ coerce: true }).min(0).catch(0)),
+};
 export const validatePagination = [
   query('limit')
     .optional({ values: 'falsy' })
