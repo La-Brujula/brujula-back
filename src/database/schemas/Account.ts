@@ -8,9 +8,9 @@ import {
   Column,
   CreatedAt,
   DataType,
-  Default,
   DeletedAt,
   ForeignKey,
+  HasMany,
   IsEmail,
   IsInt,
   Model,
@@ -18,6 +18,7 @@ import {
   Table,
   UpdatedAt,
 } from 'sequelize-typescript';
+import Job from './Job';
 
 @Table({ tableName: 'accounts', modelName: 'Account' })
 export default class Account extends Model implements IAccount {
@@ -50,6 +51,9 @@ export default class Account extends Model implements IAccount {
 
   @BelongsTo(() => Profile)
   profile!: Profile;
+
+  @HasMany(() => Job)
+  jobs?: Job;
 
   @CreatedAt
   createdAt!: Date;

@@ -3,6 +3,7 @@ import {
   AllowNull,
   BeforeUpdate,
   BelongsTo,
+  BelongsToMany,
   Column,
   CreatedAt,
   DataType,
@@ -43,7 +44,7 @@ export default class Job extends Model implements TJobPosting {
   @BelongsTo(() => Account)
   requester!: Account;
 
-  @HasMany(() => JobOpening, 'openings')
+  @HasMany(() => JobOpening)
   openings!: JobOpening[];
 
   @IsDate
@@ -114,7 +115,7 @@ export class JobOpening extends Model implements TJobOpening {
   @Column
   jobId!: string;
 
-  @BelongsTo(() => Job, 'jobId')
+  @BelongsTo(() => Job)
   job!: Job;
 
   @Is('Activity', (v) => ACTIVITY_REGEX.test(v))
@@ -151,8 +152,11 @@ export class JobOpening extends Model implements TJobOpening {
   @Column
   school!: string;
 
-  @HasMany(() => Profile, 'applicants')
-  applicants!: Profile[];
+  @HasMany(() => JobOpeningsApplicants)
+  applicants!: JobOpeningsApplicants[];
+
+  @BelongsToMany(() => Profile, { through: () => JobOpeningsApplicants })
+  profiles!: Profile[];
 
   @Column(DataType.TEXT)
   searchString?: string;
@@ -178,4 +182,24 @@ export class JobOpening extends Model implements TJobOpening {
   toDTO() {
     return JobMapper.toDto(this);
   }
+}
+
+@Table({
+  tableName: 'job_openings_applicants',
+  modelName: 'JobOpeningsApplicants',
+})
+export class JobOpeningsApplicants extends Model {
+  @ForeignKey(() => Profile)
+  @Column
+  profileId!: string;
+
+  @ForeignKey(() => JobOpening)
+  @Column
+  jobOpeningId!: string;
+
+  @BelongsTo(() => Profile)
+  profile!: Profile;
+
+  @BelongsTo(() => JobOpening)
+  opening!: JobOpening;
 }

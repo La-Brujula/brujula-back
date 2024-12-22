@@ -12,6 +12,8 @@ export interface IBasicProfile {
   subscriber: boolean;
   recommendationsCount: number;
   verified?: boolean;
+  profilePictureUrl?: string;
+  nickName?: string;
 }
 
 export interface ISearchableProfile {
@@ -54,7 +56,6 @@ export interface IExtraProfileInformation {
   linkedin?: string;
   twitter?: string;
   tiktok?: string;
-  profilePictureUrl?: string;
   headerPictureUrl?: string;
   verified?: boolean;
   companyName?: string;

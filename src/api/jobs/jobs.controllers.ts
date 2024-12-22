@@ -36,10 +36,24 @@ export default class JobsController {
     Logger.verbose(req.id + ' | ' + 'JobController | DeleteAccount | End');
     return sendResponse(res, getJobResponse);
   });
-  public applyToJob = handleAsync(async (req: Request, res: Response) => {
+  public getJobApplicants = handleAsync(async (req: Request, res: Response) => {
+    const { limit, offset } = req.query;
     Logger.verbose(req.id + ' | ' + 'JobController | DeleteAccount | Start');
-    const getJobResponse = await this.jobsService.getJob(req.params.id);
+    const getJobResponse = await this.jobsService.getJobApplicants(
+      req.params.id,
+      parseInt(limit as string),
+      parseInt(offset as string)
+    );
     Logger.verbose(req.id + ' | ' + 'JobController | DeleteAccount | End');
+    return sendResponse(res, getJobResponse);
+  });
+  public applyToJob = handleAsync(async (req: Request, res: Response) => {
+    Logger.verbose(req.id + ' | ' + 'JobController | ApplyToJob | Start');
+    const getJobResponse = await this.jobsService.applyToJob(
+      req.params.id,
+      req.user.ProfileId
+    );
+    Logger.verbose(req.id + ' | ' + 'JobController | ApplyToJob | End');
     return sendResponse(res, getJobResponse);
   });
 }

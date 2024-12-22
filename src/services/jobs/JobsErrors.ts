@@ -4,7 +4,11 @@ const JobsErrors = {
   existingAccount: new ServiceError('JE01', 'Account already exists', 409),
   wrongCredentials: new ServiceError('JE02', 'Wrong credentials', 401),
   jobDoesNotExist: new ServiceError('JE03', 'Job does not exist', 404),
-  notLoggedIn: new ServiceError('JE04', 'Not logged in', 401),
+  openingAlreadyApplied: new ServiceError(
+    'JE04',
+    'Already applied to opening',
+    409
+  ),
   badToken: new ServiceError('JE05', 'Bad jwt token', 401),
   couldNotDeleteAccount: new ServiceError(
     'JE06',

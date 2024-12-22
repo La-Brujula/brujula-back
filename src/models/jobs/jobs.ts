@@ -5,6 +5,7 @@ import {
 } from '@/api/jobs/jobs.validators';
 import { z } from 'zod';
 import { EmploymentEnum, WorkRadiusEnum } from './enums';
+import { IBasicProfile, IProfileDTO } from '../profile/profile';
 
 // extract the inferred type
 export type TJobPosting = z.infer<typeof JobPosting>;
@@ -21,13 +22,13 @@ export type TJobAlertDTO = TJobOpening & {
 
 export type TJobDetailDTO = TJobOpening & {
   id: string;
-  requesterId: string;
+  requester: IBasicProfile;
   location: string;
   workRadius: WorkRadiusEnum;
   employment: EmploymentEnum;
   description: string;
   jobStartDate: Date;
-  jobEndDate: Date;
+  jobEndDate?: Date;
   notes?: string;
   phoneNumbers?: string[];
   benefits?: string;
@@ -38,11 +39,12 @@ export type TJobDetailDTO = TJobOpening & {
   budgetHigh?: number;
   contactEndDate?: Date;
   contactStartDate?: Date;
+  applicants?: IBasicProfile[];
 };
 
 export type TJobListDTO = TJobOpening & {
   id: string;
-  requester: string;
+  requester: IProfileDTO;
   location: string;
   workRadius: WorkRadiusEnum;
   employment: EmploymentEnum;

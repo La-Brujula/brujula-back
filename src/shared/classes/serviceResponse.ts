@@ -59,7 +59,7 @@ export class ServiceResponse<T> {
     Object.freeze(this);
   }
 
-  public static ok<U>(value: any, status: number = 200): ServiceResponse<U> {
+  public static ok<U>(value?: any, status: number = 200): ServiceResponse<U> {
     if (value !== undefined && typeof value.toDTO === 'function') {
       value = value.toDTO();
     }

@@ -99,6 +99,7 @@ export class ProfileMapper implements IMapper<IProfile> {
       recommendationsCount: profile.recommendationsCount,
       fullName: profile.fullName,
       verified: profile.verified,
+      profilePictureUrl: profile.profilePictureUrl,
     };
   }
 }

@@ -6,12 +6,16 @@ import Logger from '@/providers/Logger';
 import { JobsRepository } from '@/repositories/JobsRepository';
 import { IJobSearchOptions, TJobPosting } from '@/models/jobs/jobs';
 import { IPaginationParams } from '@/shared/classes/pagination';
-import Profile from '@/database/schemas/Profile';
+import { ProfileRepository } from '@/repositories/ProfileRepository';
+import ProfileErrors from '../profile/ProfileErrors';
+import { ProfileMapper } from '@/models/profile/profileMapper';
 
 @Service()
 export default class JobsService {
   constructor(
     @Inject('JobsRepository')
+    @Inject('ProfileRepository')
+    private readonly profileRepository: ProfileRepository,
     private readonly jobsRepository: JobsRepository
   ) {}
 
@@ -68,24 +72,45 @@ export default class JobsService {
       throw JobsErrors.jobDoesNotExist;
     }
     Logger.verbose('JobService | getJob | Got a job');
-    const jobDTO = JobRecord.toDTO();
+    const jobDTO = JobMapper.buildDto(JobRecord);
     Logger.verbose('JobService | getJob | Finished');
     return ServiceResponse.ok(jobDTO);
   }
-  public async applyToJob(jobId: string, profile: Profile) {
+  public async getJobApplicants(jobId: string, limit: number, offset: number) {
+    Logger.verbose(`JobService | getJobApplicants | Started`);
+    Logger.verbose('JobService | getJobApplicants | Getting the job by id');
+    const applicants = await this.jobsRepository.getJobApplicants(
+      jobId,
+      limit,
+      offset
+    );
+
+    Logger.verbose('JobService | getJobApplicants | Got applicants');
+    const profiles = applicants.map((a) => ProfileMapper.toDto(a.profile));
+    Logger.verbose('JobService | getJobApplicants | Finished');
+    return ServiceResponse.ok(profiles);
+  }
+  public async applyToJob(jobId: string, profileId: string) {
     Logger.verbose(`JobService | applyToJob | Started`);
+
+    Logger.verbose('JobService | applyToJob | Verifying profile exists');
+    const ProfileRecord = await this.profileRepository.findById(profileId);
+    if (ProfileRecord === null) throw ProfileErrors.profileDoesNotExist;
+
     Logger.verbose('JobService | applyToJob | Getting opening by id');
-    const JobRecord = await this.jobsRepository.findById(jobId);
-    if (JobRecord === null) {
-      throw JobsErrors.jobDoesNotExist;
-    }
-    Logger.verbose('JobService | applyToJob | Got job');
+    const JobRecord = await this.jobsRepository.getLean(jobId);
+    if (JobRecord === null) throw JobsErrors.jobDoesNotExist;
+    Logger.verbose('JobService | applyToJob | Got opening');
+
+    Logger.verbose('JobService | applyToJob | Checking if already applied');
+    const alreadyApplied = await JobRecord.$has('applicants', profileId);
+    if (alreadyApplied === null) throw JobsErrors.openingAlreadyApplied;
+
     Logger.verbose('JobService | applyToJob | Adding profile as applicant');
-    await JobRecord.$add('applicants', profile);
-    Logger.verbose('JobService | applyToJob | Converting job to DTO');
-    const jobDTO = JobRecord.toDTO();
+    await JobRecord.$add('applicants', profileId);
+
     Logger.verbose('JobService | applyToJob | Finished');
-    return ServiceResponse.ok(jobDTO);
+    return ServiceResponse.ok(undefined, 201);
   }
 
   private async jobExists(jobId: string) {

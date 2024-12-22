@@ -1,9 +1,10 @@
 import { JobOpening } from '@/database/schemas/Job';
 import { IMapper } from '../base/mapper';
 import { TJobAlertDTO, TJobDetailDTO, TJobListDTO, TJobPosting } from './jobs';
+import { ProfileMapper } from '../profile/profileMapper';
 
 export class JobMapper implements IMapper<TJobPosting> {
-  static toDto(opening: JobOpening): TJobDetailDTO {
+  static toDto(opening: { [k: string]: any }): TJobDetailDTO {
     return {
       id: opening.id,
       count: opening.count,
@@ -13,23 +14,111 @@ export class JobMapper implements IMapper<TJobPosting> {
       languages: opening.languages,
       ageRangeMin: opening.ageRangeMin,
       ageRangeMax: opening.ageRangeMax,
-      notes: opening.job.notes,
-      benefits: opening.job.benefits,
-      whatsapp: opening.job.whatsapp,
+      notes: opening.notes,
+      benefits: opening.benefits,
+      whatsapp: opening.whatsapp,
+      location: opening.location,
+      budgetLow: opening.budgetLow,
+      workRadius: opening.workRadius,
+      employment: opening.employment,
+      jobEndDate: opening.jobEndDate,
+      budgetHigh: opening.budgetHigh,
+      description: opening.description,
+      contactEmail: opening.contactEmail,
+      phoneNumbers: opening.phoneNumbers,
+      jobStartDate: opening.jobStartDate,
+      contactEndDate: opening.contactEndDate,
+      contactStartDate: opening.contactStartDate,
+      specialRequirements: opening.specialRequirements,
+      requester: ProfileMapper.toBasicProfile(opening.requester?.profile),
+    };
+  }
+
+  static buildDto(opening: {
+    opening: {
+      id: string;
+      jobId: string;
+      activity: string;
+      count: number;
+      probono: boolean;
+      gender: 'male' | 'female' | 'other';
+      ageRangeMin: number;
+      ageRangeMax: number;
+      languages: string[];
+      school: string;
+      searchString: string;
+      createdAt: Date;
+      updatedAt: Date;
+    };
+    job: {
+      requesterId: string;
+      contactStartDate: Date;
+      contactEndDate: Date;
+      contactEmail: string;
+      whatsapp: string;
+      phoneNumbers: string[];
+      location: string;
+      workRadius: string;
+      specialRequirements: string;
+      employment: string;
+      description: string;
+      jobStartDate: Date;
+      jobEndDate?: Date;
+      budgetLow?: number;
+      budgetHigh?: number;
+      benefits: string;
+      notes: string;
+    };
+    requester: {
+      id: string;
+      primaryEmail: string;
+      type: 'fisica' | 'moral';
+      searchable: boolean;
+      subscriber: boolean;
+      recommendationsCount: number;
+      firstName: string;
+      lastName: string;
+      verified: boolean;
+      profilePictureUrl?: string;
+      nickName: string;
+    };
+  }): TJobDetailDTO {
+    return {
+      id: opening.opening.id,
+      requester: {
+        id: opening.requester.id,
+        primaryEmail: opening.requester.primaryEmail,
+        type: opening.requester.type,
+        fullName: [
+          opening.requester.firstName,
+          opening.requester.lastName,
+        ].join(' '),
+        searchable: opening.requester.searchable,
+        subscriber: opening.requester.subscriber,
+        recommendationsCount: opening.requester.recommendationsCount,
+        verified: opening.requester.verified,
+        nickName: opening.requester.nickName,
+        profilePictureUrl: opening.requester.profilePictureUrl,
+      },
+      count: opening.opening.count,
+      activity: opening.opening.activity,
+      probono: opening.opening.probono,
       location: opening.job.location,
-      budgetLow: opening.job.budgetLow,
       workRadius: opening.job.workRadius,
       employment: opening.job.employment,
-      jobEndDate: opening.job.jobEndDate,
-      budgetHigh: opening.job.budgetHigh,
-      requesterId: opening.job.requesterId,
       description: opening.job.description,
-      contactEmail: opening.job.contactEmail,
-      phoneNumbers: opening.job.phoneNumbers,
       jobStartDate: opening.job.jobStartDate,
+      jobEndDate: opening.job.jobEndDate,
+      notes: opening.job.notes,
+      phoneNumbers: opening.job.phoneNumbers,
+      benefits: opening.job.benefits,
+      whatsapp: opening.job.whatsapp,
+      contactEmail: opening.job.contactEmail,
+      specialRequirements: opening.job.specialRequirements,
+      budgetLow: opening.job.budgetLow,
+      budgetHigh: opening.job.budgetHigh,
       contactEndDate: opening.job.contactEndDate,
       contactStartDate: opening.job.contactStartDate,
-      specialRequirements: opening.job.specialRequirements,
     };
   }
 
@@ -63,7 +152,7 @@ export class JobMapper implements IMapper<TJobPosting> {
       activity: opening.activity,
       location: opening.job.location,
       languages: opening.languages,
-      requester: opening.job.requesterId,
+      requester: ProfileMapper.toDto(opening.job.requester.profile),
       workRadius: opening.job.workRadius,
       employment: opening.job.employment,
       jobEndDate: opening.job.jobEndDate,

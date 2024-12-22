@@ -17,57 +17,34 @@ import {
 import { IPaginationParams } from '@/shared/classes/pagination';
 import { Repository } from 'sequelize-typescript';
 import { Cast, Col, Fn } from 'sequelize/types/utils';
-import Job, { JobOpening } from '@/database/schemas/Job';
+import Job, { JobOpening, JobOpeningsApplicants } from '@/database/schemas/Job';
 import {
   IJobSearchOptions,
   TJobOpening,
   TJobPosting,
 } from '@/models/jobs/jobs';
 import JobsErrors from '@/services/jobs/JobsErrors';
+import Profile from '@/database/schemas/Profile';
 import Account from '@/database/schemas/Account';
 
-@Service('JobsRepository')
+@Service()
 export class JobsRepository {
   declare sequelize: Sequelize;
   declare db: Repository<JobOpening>;
+  declare applicantsDb: Repository<JobOpeningsApplicants>;
   declare jobsDb: Repository<Job>;
   declare accountsDb: Repository<Account>;
-  declare openingsInclude: IncludeOptions;
-  declare profileInclude: IncludeOptions;
+  declare profilesDb: Repository<Profile>;
+  declare jobsInclude: IncludeOptions;
+  declare fullInclude: IncludeOptions;
+
   constructor(@Inject('Database') database: Database) {
     this.jobsDb = database.sequelize.getRepository(Job);
     this.db = database.sequelize.getRepository(JobOpening);
-    this.accountsDb = database.sequelize.getRepository(Account);
+    this.applicantsDb = database.sequelize.getRepository(JobOpeningsApplicants);
     this.sequelize = database.sequelize;
 
-    this.openingsInclude = {
-      model: this.jobsDb,
-      as: 'job',
-      attributes: [
-        'requesterId',
-        'contactStartDate',
-        'contactEndDate',
-        'contactEmail',
-        'whatsapp',
-        'phoneNumbers',
-        'location',
-        'workRadius',
-        'specialRequirements',
-        'employment',
-        'description',
-        'jobStartDate',
-        'jobEndDate',
-        'budgetLow',
-        'budgetHigh',
-        'benefits',
-        'notes',
-      ],
-    } as IncludeOptions;
-    this.profileInclude = {
-      model: this.accountsDb,
-      as: 'job.requester',
-      attributes: ['id', 'email', 'ProfileId'],
-    } as IncludeOptions;
+    console.log(this.jobsDb.associations);
   }
 
   async getAllValuesForField(fieldName: string, transaction?: Transaction) {
@@ -79,10 +56,110 @@ export class JobsRepository {
   }
 
   async findById(id: string, transaction?: Transaction) {
-    return await this.db.findByPk(id, {
-      include: [this.openingsInclude],
-      transaction,
-    });
+    const [applicant, _] = (await this.sequelize.query(
+      `SELECT
+        jo."id" as "opening.id",
+        jo."jobId" as "opening.jobId",
+        jo."activity" as "opening.activity",
+        jo."count" as "opening.count",
+        jo."probono" as "opening.probono",
+        jo."gender" as "opening.gender",
+        jo."ageRangeMin" as "opening.ageRangeMin",
+        jo."ageRangeMax" as "opening.ageRangeMax",
+        jo."languages" as "opening.languages",
+        jo."school" as "opening.school",
+        jo."searchString" as "opening.searchString",
+        jo."createdAt" as "opening.createdAt",
+        jo."updatedAt" as "opening.updatedAt",
+        j."requesterId" as "job.requesterId",
+        j."contactStartDate" as "job.contactStartDate",
+        j."contactEndDate" as "job.contactEndDate",
+        j."contactEmail" as "job.contactEmail",
+        j."whatsapp" as "job.whatsapp",
+        j."phoneNumbers" as "job.phoneNumbers",
+        j."location" as "job.location",
+        j."workRadius" as "job.workRadius",
+        j."specialRequirements" as "job.specialRequirements",
+        j."employment" as "job.employment",
+        j."description" as "job.description",
+        j."jobStartDate" as "job.jobStartDate",
+        j."jobEndDate" as "job.jobEndDate",
+        j."budgetLow" as "job.budgetLow",
+        j."budgetHigh" as "job.budgetHigh",
+        j."benefits" as "job.benefits",
+        j."notes" as "job.notes",
+        r."id" as "requester.id",
+        r."primaryEmail" as "requester.primaryEmail",
+        r."type" as "requester.type",
+        r."searchable" as "requester.searchable",
+        r."subscriber" as "requester.subscriber",
+        r."recommendationsCount" as "requester.recommendationsCount",
+        r."firstName" as "requester.firstName",
+        r."lastName" as "requester.lastName",
+        r."verified" as "requester.verified",
+        r."profilePictureUrl" as "requester.profilePictureUrl",
+        r."nickName" as "requester.nickName"
+      FROM "job_openings" jo
+      JOIN "jobs" j ON j."id" = jo."jobId"
+      JOIN "accounts" a ON j."requesterId" = a."email"
+      JOIN "profiles" r ON a."ProfileId" = r."id"
+      WHERE jo."id" = :id;
+      `,
+      { replacements: { id }, nest: true }
+    )) as unknown as [
+      {
+        opening: {
+          id: string;
+          jobId: string;
+          activity: string;
+          count: number;
+          probono: boolean;
+          gender: 'male' | 'female' | 'other';
+          ageRangeMin: number;
+          ageRangeMax: number;
+          languages: string[];
+          school: string;
+          searchString: string;
+          createdAt: Date;
+          updatedAt: Date;
+        };
+        job: {
+          requesterId: string;
+          contactStartDate: Date;
+          contactEndDate: Date;
+          contactEmail: string;
+          whatsapp: string;
+          phoneNumbers: string[];
+          location: string;
+          workRadius: string;
+          specialRequirements: string;
+          employment: string;
+          description: string;
+          jobStartDate: Date;
+          jobEndDate?: Date;
+          budgetLow?: number;
+          budgetHigh?: number;
+          benefits: string;
+          notes: string;
+        };
+        requester: {
+          id: string;
+          primaryEmail: string;
+          type: 'fisica' | 'moral';
+          searchable: boolean;
+          subscriber: boolean;
+          recommendationsCount: number;
+          firstName: string;
+          lastName: string;
+          verified: boolean;
+          profilePictureUrl?: string;
+          nickName: string;
+        };
+      },
+      any,
+    ];
+
+    return applicant;
   }
 
   concatColumns(...columns: string[]) {
@@ -146,8 +223,55 @@ export class JobsRepository {
       ].filter((a) => !!a) as Order,
       limit,
       offset,
-      include: this.openingsInclude,
-      nest: true,
+      include: [
+        {
+          model: this.jobsDb,
+          as: 'job',
+          attributes: [
+            'requesterId',
+            'contactStartDate',
+            'contactEndDate',
+            'contactEmail',
+            'whatsapp',
+            'phoneNumbers',
+            'location',
+            'workRadius',
+            'specialRequirements',
+            'employment',
+            'description',
+            'jobStartDate',
+            'jobEndDate',
+            'budgetLow',
+            'budgetHigh',
+            'benefits',
+            'notes',
+          ],
+          include: [
+            {
+              model: this.sequelize.models.Account,
+              as: 'requester',
+              attributes: ['email', 'ProfileId'],
+              include: [
+                {
+                  model: this.sequelize.models.Profile,
+                  as: 'profile',
+                  attributes: [
+                    'id',
+                    'primaryEmail',
+                    'type',
+                    'fullName',
+                    'searchable',
+                    'subscriber',
+                    'recommendationsCount',
+                    'verified',
+                    'profilePictureUrl',
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      ],
     });
     return [count, rows];
   }
@@ -177,5 +301,48 @@ export class JobsRepository {
     await record.update(values, { transaction });
     record.save();
     return record;
+  }
+
+  async getLean(id: string) {
+    const record = await this.db.findByPk(id, {
+      attributes: ['id'],
+    });
+    return record;
+  }
+  async getJobApplicants(id: string, limit: number = 10, offset: number = 0) {
+    const applicants = await this.applicantsDb.findAll({
+      where: {
+        jobOpeningId: id,
+      },
+      limit,
+      offset,
+      include: [
+        {
+          model: this.sequelize.models.Profile,
+          as: 'profile',
+          attributes: [
+            'primaryEmail',
+            'fullName',
+            'id',
+            'type',
+            'subscriber',
+            'recommendationsCount',
+            'nickName',
+            'primaryActivity',
+            'secondaryActivity',
+            'thirdActivity',
+            'gender',
+            'location',
+            'country',
+            'profilePictureUrl',
+            'headerPictureUrl',
+            'headline',
+            'verified',
+          ],
+        },
+      ],
+    });
+
+    return applicants;
   }
 }

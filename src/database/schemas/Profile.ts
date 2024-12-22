@@ -11,6 +11,8 @@ import {
   Default,
   DeletedAt,
   ForeignKey,
+  HasMany,
+  HasOne,
   Is,
   IsDate,
   IsEmail,
@@ -24,6 +26,8 @@ import { UUIDV4 } from 'sequelize';
 import { ProfileMapper } from '@/models/profile/profileMapper';
 
 import IdReferents from '@shared/constants/idToKeywords.json';
+import Account from './Account';
+import { JobOpening, JobOpeningsApplicants } from './Job';
 
 const ACTIVITY_REGEX = /\d{3}-\d{2}/;
 
@@ -183,6 +187,15 @@ export default class Profile extends Model implements IProfile {
     'recommendedBy'
   )
   recommendations!: Profile[];
+
+  @HasOne(() => Account, 'id')
+  account?: Account;
+
+  @HasMany(() => JobOpeningsApplicants)
+  jobOpeningsApplicants!: JobOpeningsApplicants[];
+
+  @BelongsToMany(() => JobOpening, { through: () => JobOpeningsApplicants })
+  jobOpenings!: JobOpening[];
 
   @CreatedAt
   createdAt!: Date;

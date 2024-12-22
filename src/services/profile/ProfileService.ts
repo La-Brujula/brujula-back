@@ -6,6 +6,7 @@ import {
   IExtraProfileInformation,
   IProfile,
   ENUMERATABLE_FIELDS,
+  IBasicProfile,
 } from '@/models/profile/profile';
 import { ProfileRepository } from '@/repositories/ProfileRepository';
 import { ServiceResponse } from '@/shared/classes/serviceResponse';
@@ -184,7 +185,9 @@ export default class ProfileService {
 
   public async updateProfile(
     id: string,
-    params: ISearchableProfile & IExtraProfileInformation
+    params: Partial<
+      ISearchableProfile & IExtraProfileInformation & IBasicProfile
+    >
   ): Promise<ServiceResponse<IProfile>> {
     Logger.verbose('ProfileService | GetFullProfile | Started');
     const profile = await this.profileRepository.update(id, params);

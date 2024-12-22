@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import {
+  GetJobApplicantsRequest,
   GetJobRequest,
   JobPostingCreateRequest,
   JobSearchRequest,
@@ -7,6 +8,7 @@ import {
 import Container from 'typedi';
 import JobsController from './jobs.controllers';
 import { zodValidationHandler } from '@/shared/utils/zodValidationHandler';
+import authenticateRequest from '@/shared/middleware/authenticateRequest';
 
 const router: Router = Router();
 
@@ -20,10 +22,22 @@ export default (app: Router) => {
     .route('/')
     .get(zodValidationHandler(JobSearchRequest), jobsController.getJobs)
     .post(
+      authenticateRequest,
       zodValidationHandler(JobPostingCreateRequest),
       jobsController.createJob
     );
   router
     .route('/:id')
     .get(zodValidationHandler(GetJobRequest), jobsController.getJob);
+  router
+    .route('/:id/applicants')
+    .get(
+      zodValidationHandler(GetJobApplicantsRequest),
+      jobsController.getJobApplicants
+    )
+    .post(
+      zodValidationHandler(GetJobRequest),
+      authenticateRequest,
+      jobsController.applyToJob
+    );
 };

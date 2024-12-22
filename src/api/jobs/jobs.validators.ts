@@ -69,3 +69,10 @@ export const JobSearchRequest = z.object({
 export const GetJobRequest = z.object({
   params: z.object({ id: z.string() }),
 });
+export const GetJobApplicantsRequest = z.object({
+  params: z.object({ id: z.string() }),
+  query: z.object({
+    limit: z.optional(z.number().max(10).min(0)).default(10),
+    offset: z.optional(z.number().min(0)).default(0),
+  }),
+});
