@@ -59,6 +59,7 @@ export const JobSearchOptions = z.object({
   location: z.optional(z.string()).catch(undefined),
   probono: z.optional(z.boolean()).catch(undefined),
   employment: z.optional(z.enum(EMPLOYMENT_OPTIONS)).catch(undefined),
+  requesterId: z.optional(z.string()).catch(undefined),
   ...zodValidatePagination,
 });
 

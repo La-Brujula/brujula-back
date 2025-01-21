@@ -52,4 +52,9 @@ export default {
     sslPort: +(process.env.SMTP_SSL_PORT || 465),
     tlsPort: +(process.env.SMTP_TLS_PORT || 587),
   },
+
+  twilio: {
+    accountSid: process.env.TWILIO_ACCOUNT_SID,
+    authToken: process.env.TWILIO_AUTH_TOKEN,
+  },
 };

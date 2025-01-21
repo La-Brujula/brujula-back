@@ -26,6 +26,9 @@ export default (app: Router) => {
       zodValidationHandler(JobPostingCreateRequest),
       jobsController.createJob
     );
+
+  router.get('/me', authenticateRequest, jobsController.getAppliedJobs);
+
   router
     .route('/:id')
     .get(zodValidationHandler(GetJobRequest), jobsController.getJob);

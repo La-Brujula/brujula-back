@@ -56,4 +56,12 @@ export default class JobsController {
     Logger.verbose(req.id + ' | ' + 'JobController | ApplyToJob | End');
     return sendResponse(res, getJobResponse);
   });
+  public getAppliedJobs = handleAsync(async (req: Request, res: Response) => {
+    Logger.verbose(req.id + ' | ' + 'JobController | GetAppliedJobs | Start');
+    const getJobResponse = await this.jobsService.getCreatedJobs(
+      req.user.email
+    );
+    Logger.verbose(req.id + ' | ' + 'JobController | GetAppliedJobs | End');
+    return sendResponse(res, getJobResponse);
+  });
 }

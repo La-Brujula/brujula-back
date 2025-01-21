@@ -64,6 +64,7 @@ export const bodyMatchesSearchQuery = [
     .trim()
     .toLowerCase(),
   query('email').optional({ values: 'falsy' }).trim().isString().isEmail(),
+  query('country').optional({ values: 'falsy' }).trim().isISO31661Alpha2(),
 ];
 
 export const zodValidatePagination = {

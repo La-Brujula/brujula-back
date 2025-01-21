@@ -144,8 +144,7 @@ export class ProfileRepository {
         query
           .split(' ')
           .flatMap((word) => [
-            `strict_word_similarity('${word}', "searchString") * 4`,
-            `word_similarity('${word}', CONCAT("firstName", "lastName", "nickName")) * 3`,
+            `word_similarity('${word}', "searchString") * 8`,
             `strict_word_similarity('${word}', CONCAT("city", "state", "country", "postalCode")) * 2`,
           ])
           .join(' + ') +
@@ -168,16 +167,18 @@ export class ProfileRepository {
       associations,
       certifications,
       email,
+      country,
     }: IProfileSearchQuery,
     { limit = 10, offset = 0 }: IPaginationParams
   ): Promise<[number, Profile[]]> {
     const searchQuery = {
       where: {
         [Op.and]: [
+          !!country && { country },
           !email && {
             searchable: true,
           },
-          !!query && where(this.buildTextSearchQuery(query), Op.gte, 0.9),
+          !!query && where(this.buildTextSearchQuery(query), Op.gte, 8.0),
           !!name &&
             where(
               fn(

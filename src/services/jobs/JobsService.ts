@@ -9,14 +9,17 @@ import { IPaginationParams } from '@/shared/classes/pagination';
 import { ProfileRepository } from '@/repositories/ProfileRepository';
 import ProfileErrors from '../profile/ProfileErrors';
 import { ProfileMapper } from '@/models/profile/profileMapper';
+import { AccountRepository } from '@/repositories/AuthenticationRepository';
 
 @Service()
 export default class JobsService {
   constructor(
     @Inject('JobsRepository')
+    private readonly jobsRepository: JobsRepository,
     @Inject('ProfileRepository')
     private readonly profileRepository: ProfileRepository,
-    private readonly jobsRepository: JobsRepository
+    @Inject('AccountRepository')
+    private readonly accountRepository: AccountRepository
   ) {}
 
   public async createJob(newJob: TJobPosting) {
@@ -111,6 +114,32 @@ export default class JobsService {
 
     Logger.verbose('JobService | applyToJob | Finished');
     return ServiceResponse.ok(undefined, 201);
+  }
+  public async getCreatedJobs(profileId: string) {
+    Logger.verbose(`JobService | getCreatedJobs | Started`);
+
+    Logger.verbose('JobService | getCreatedJobs | Verifying profile exists');
+    const accountRecord = await this.accountRepository.findByEmail(profileId);
+    if (accountRecord === null) throw ProfileErrors.profileDoesNotExist;
+
+    Logger.verbose('JobService | getCreatedJobs | Getting jobs by profile id');
+    const { rows: JobRecords, count } =
+      await this.jobsRepository.getCreated(profileId);
+    if (JobRecords === null) throw JobsErrors.jobDoesNotExist;
+    Logger.verbose('JobService | getCreatedJobs | Got openings');
+
+    Logger.verbose('JobService | getCreatedJobs | Finished');
+    return ServiceResponse.paginate(
+      JobRecords.flatMap((job) =>
+        job.openings.map((opening) => {
+          opening.job = job;
+          return JobMapper.toListItem(opening);
+        })
+      ),
+      count,
+      0,
+      count
+    );
   }
 
   private async jobExists(jobId: string) {

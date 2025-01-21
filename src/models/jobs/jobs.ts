@@ -40,6 +40,7 @@ export type TJobDetailDTO = TJobOpening & {
   contactEndDate?: Date;
   contactStartDate?: Date;
   applicants?: IBasicProfile[];
+  createdAt: Date;
 };
 
 export type TJobListDTO = TJobOpening & {
@@ -59,4 +60,5 @@ export interface IJobSearchOptions {
   location: string;
   probono: boolean;
   employment: EmploymentEnum;
+  requesterId: string;
 }

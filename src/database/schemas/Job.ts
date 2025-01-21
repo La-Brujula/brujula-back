@@ -152,7 +152,7 @@ export class JobOpening extends Model implements TJobOpening {
   @Column
   school!: string;
 
-  @HasMany(() => JobOpeningsApplicants)
+  @HasMany(() => JobOpeningsApplicants, 'jobOpeningId')
   applicants!: JobOpeningsApplicants[];
 
   @BelongsToMany(() => Profile, { through: () => JobOpeningsApplicants })
@@ -197,9 +197,9 @@ export class JobOpeningsApplicants extends Model {
   @Column
   jobOpeningId!: string;
 
-  @BelongsTo(() => Profile)
+  @BelongsTo(() => Profile, 'id')
   profile!: Profile;
 
-  @BelongsTo(() => JobOpening)
+  @BelongsTo(() => JobOpening, 'id')
   opening!: JobOpening;
 }

@@ -37,6 +37,7 @@
     "sequelize-typescript": "^2.1.6",
     "tsconfig": "^7.0.0",
     "tsconfig-paths": "^4.2.0",
+    "twilio": "^5.4.0",
     "typedi": "^0.10.0",
     "umzug": "^3.5.0",
     "validator": "^13.11.0",

@@ -188,10 +188,10 @@ export default class Profile extends Model implements IProfile {
   )
   recommendations!: Profile[];
 
-  @HasOne(() => Account, 'id')
+  @HasOne(() => Account, 'email')
   account?: Account;
 
-  @HasMany(() => JobOpeningsApplicants)
+  @HasMany(() => JobOpeningsApplicants, 'jobOpeningId')
   jobOpeningsApplicants!: JobOpeningsApplicants[];
 
   @BelongsToMany(() => JobOpening, { through: () => JobOpeningsApplicants })
@@ -228,6 +228,8 @@ export default class Profile extends Model implements IProfile {
               : null
           )
         ),
+        user.get('city'),
+        user.get('state'),
       ]
         .flat()
         .filter((a) => !!a)

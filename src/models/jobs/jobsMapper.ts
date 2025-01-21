@@ -31,78 +31,32 @@ export class JobMapper implements IMapper<TJobPosting> {
       contactStartDate: opening.contactStartDate,
       specialRequirements: opening.specialRequirements,
       requester: ProfileMapper.toBasicProfile(opening.requester?.profile),
+      createdAt: opening.createdAt,
     };
   }
 
-  static buildDto(opening: {
-    opening: {
-      id: string;
-      jobId: string;
-      activity: string;
-      count: number;
-      probono: boolean;
-      gender: 'male' | 'female' | 'other';
-      ageRangeMin: number;
-      ageRangeMax: number;
-      languages: string[];
-      school: string;
-      searchString: string;
-      createdAt: Date;
-      updatedAt: Date;
-    };
-    job: {
-      requesterId: string;
-      contactStartDate: Date;
-      contactEndDate: Date;
-      contactEmail: string;
-      whatsapp: string;
-      phoneNumbers: string[];
-      location: string;
-      workRadius: string;
-      specialRequirements: string;
-      employment: string;
-      description: string;
-      jobStartDate: Date;
-      jobEndDate?: Date;
-      budgetLow?: number;
-      budgetHigh?: number;
-      benefits: string;
-      notes: string;
-    };
-    requester: {
-      id: string;
-      primaryEmail: string;
-      type: 'fisica' | 'moral';
-      searchable: boolean;
-      subscriber: boolean;
-      recommendationsCount: number;
-      firstName: string;
-      lastName: string;
-      verified: boolean;
-      profilePictureUrl?: string;
-      nickName: string;
-    };
-  }): TJobDetailDTO {
+  static buildDto(opening: JobOpening): TJobDetailDTO {
     return {
-      id: opening.opening.id,
+      id: opening.id,
       requester: {
-        id: opening.requester.id,
-        primaryEmail: opening.requester.primaryEmail,
-        type: opening.requester.type,
+        id: opening.job.requester.profile.id,
+        primaryEmail: opening.job.requester.profile.primaryEmail,
+        type: opening.job.requester.profile.type,
         fullName: [
-          opening.requester.firstName,
-          opening.requester.lastName,
+          opening.job.requester.profile.firstName,
+          opening.job.requester.profile.lastName,
         ].join(' '),
-        searchable: opening.requester.searchable,
-        subscriber: opening.requester.subscriber,
-        recommendationsCount: opening.requester.recommendationsCount,
-        verified: opening.requester.verified,
-        nickName: opening.requester.nickName,
-        profilePictureUrl: opening.requester.profilePictureUrl,
+        searchable: opening.job.requester.profile.searchable,
+        subscriber: opening.job.requester.profile.subscriber,
+        recommendationsCount:
+          opening.job.requester.profile.recommendationsCount,
+        verified: opening.job.requester.profile.verified,
+        nickName: opening.job.requester.profile.nickName,
+        profilePictureUrl: opening.job.requester.profile.profilePictureUrl,
       },
-      count: opening.opening.count,
-      activity: opening.opening.activity,
-      probono: opening.opening.probono,
+      count: opening.count,
+      activity: opening.activity,
+      probono: opening.probono,
       location: opening.job.location,
       workRadius: opening.job.workRadius,
       employment: opening.job.employment,
@@ -119,6 +73,8 @@ export class JobMapper implements IMapper<TJobPosting> {
       budgetHigh: opening.job.budgetHigh,
       contactEndDate: opening.job.contactEndDate,
       contactStartDate: opening.job.contactStartDate,
+      createdAt: opening.createdAt,
+      gender: opening.gender,
     };
   }
 
