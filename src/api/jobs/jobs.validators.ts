@@ -4,11 +4,11 @@ import { zodValidatePagination } from '../profile/profile.validators';
 
 export const JobOpening = z.object({
   activity: z.string().length(6),
-  count: z.number(),
+  count: z.number({ coerce: true }),
   probono: z.boolean(),
-  gender: z.optional(z.enum(['male', 'female', 'other'])),
-  ageRangeMin: z.optional(z.number().min(0).max(120)),
-  ageRangeMax: z.optional(z.number().min(0).max(120)),
+  gender: z.optional(z.enum(['male', 'female', 'other'])).catch(undefined),
+  ageRangeMin: z.optional(z.number({ coerce: true }).min(0).max(120)),
+  ageRangeMax: z.optional(z.number({ coerce: true }).min(0).max(120)),
   school: z.optional(z.string()),
   languages: z.optional(
     z.array(
@@ -20,34 +20,38 @@ export const JobOpening = z.object({
   ),
 });
 
-export const JobPosting = z.object({
-  id: z.optional(z.string()),
-  // Post
-  requesterId: z.optional(z.string().max(128)),
-  contactStartDate: z.date({ coerce: true }).catch(new Date()),
-  contactEndDate: z
-    .date({ coerce: true })
-    .catch(
-      new Date(new Date().getTime() + 1000 * 60 * 60 * 24 * 5) /* 5 days */
-    ),
-  contactEmail: z.optional(z.string().email()),
-  whatsapp: z.optional(z.string()),
-  phoneNumbers: z.optional(z.array(z.string())),
-  // Service
-  openings: z.array(JobOpening).max(10),
-  location: z.enum(['online', 'hybrid', 'in-person']),
-  workRadius: z.enum(WORK_RADIUS_OPTIONS),
-  specialRequirements: z.optional(z.string()),
-  // Proyect
-  employment: z.enum(EMPLOYMENT_OPTIONS),
-  description: z.string().max(1024),
-  jobStartDate: z.date({ coerce: true }).catch(new Date()),
-  jobEndDate: z.optional(z.date({ coerce: true })),
-  budgetLow: z.optional(z.number()),
-  budgetHigh: z.optional(z.number()),
-  benefits: z.optional(z.string().max(1024)),
-  notes: z.optional(z.string().max(1024)),
-});
+export const JobPosting = z
+  .object({
+    // Post
+    requesterId: z.optional(z.string().max(128)),
+    contactStartDate: z.date({ coerce: true, required_error: 'invalid_type' }),
+    contactEndDate: z.date({ coerce: true }),
+    contactEmail: z.optional(z.string().email()),
+    whatsapp: z.optional(z.string()),
+    phoneNumbers: z.optional(z.string().transform((v) => [v])),
+    // Service
+    openings: z.array(JobOpening).max(10),
+    location: z.enum(['online', 'hybrid', 'in-person']),
+    workRadius: z.optional(z.enum(WORK_RADIUS_OPTIONS)).catch(undefined),
+    specialRequirements: z.optional(z.string()),
+    // Proyect
+    employment: z.enum(EMPLOYMENT_OPTIONS),
+    description: z.string().max(1024),
+    jobStartDate: z.date({ coerce: true }).catch(new Date()),
+    jobEndDate: z.optional(z.date({ coerce: true })).catch(undefined),
+    budgetLow: z.optional(z.number({ coerce: true })),
+    budgetHigh: z.optional(z.number({ coerce: true })),
+    benefits: z.optional(z.string().max(1024)),
+    notes: z.optional(z.string().max(1024)),
+  })
+  .refine(
+    ({ contactEmail, whatsapp, phoneNumbers }) =>
+      !!contactEmail || !!whatsapp || !!phoneNumbers,
+    {
+      message: 'One of contactEmail, whatsapp, phoneNumbers must be defined',
+      path: ['contactEmail'],
+    }
+  );
 
 export const JobPostingCreateRequest = z.object({
   body: JobPosting,
