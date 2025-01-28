@@ -1,6 +1,7 @@
 import { TJobOpening, TJobPosting } from '@/models/jobs/jobs';
 import {
   AllowNull,
+  BeforeCreate,
   BeforeUpdate,
   BelongsTo,
   BelongsToMany,
@@ -161,7 +162,7 @@ export class JobOpening extends Model implements TJobOpening {
   @Column(DataType.TEXT)
   searchString?: string;
 
-  @BeforeUpdate
+  @BeforeCreate
   static async updateVector(opening: JobOpening) {
     opening.setDataValue(
       'searchString',
