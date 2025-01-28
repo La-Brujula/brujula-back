@@ -61,7 +61,7 @@ export class JobsRepository {
     });
   }
 
-  async findById(id: string, transaction?: Transaction) {
+  async findById(id: string) {
     const applicant = await this.db.findByPk(id, {
       include: [
         {
@@ -136,7 +136,7 @@ export class JobsRepository {
     return literal(
       '(' +
         [
-          `strict_word_similarity('${query}', "searchString") * 4`,
+          `strict_word_similarity('${query}', "JobOpenings"."searchString") * 4`,
           `strict_word_similarity('${query}', CONCAT("description", "notes", "specialRequirements")) * 2`,
         ].join(' + ') +
         ')'
