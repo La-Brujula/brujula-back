@@ -197,9 +197,9 @@ export class JobOpeningsApplicants extends Model {
   @Column
   jobOpeningId!: string;
 
-  @BelongsTo(() => Profile, 'id')
+  @BelongsTo(() => Profile, 'profileId')
   profile!: Profile;
 
-  @BelongsTo(() => JobOpening, 'id')
+  @BelongsTo(() => JobOpening, 'jobOpeningId')
   opening!: JobOpening;
 }
