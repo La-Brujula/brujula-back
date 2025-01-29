@@ -31,27 +31,28 @@ export default class JobsController {
   });
 
   public getJob = handleAsync(async (req: Request, res: Response) => {
-    Logger.verbose(req.id + ' | ' + 'JobController | DeleteAccount | Start');
+    Logger.verbose(req.id + ' | ' + 'JobController | GetJob | Start');
     const getJobResponse = await this.jobsService.getJob(req.params.id);
-    Logger.verbose(req.id + ' | ' + 'JobController | DeleteAccount | End');
+    Logger.verbose(req.id + ' | ' + 'JobController | GetJob | End');
     return sendResponse(res, getJobResponse);
   });
   public getJobApplicants = handleAsync(async (req: Request, res: Response) => {
     const { limit, offset } = req.query;
-    Logger.verbose(req.id + ' | ' + 'JobController | DeleteAccount | Start');
+    Logger.verbose(req.id + ' | ' + 'JobController | GetJobApplicants | Start');
     const getJobResponse = await this.jobsService.getJobApplicants(
       req.params.id,
       parseInt(limit as string),
       parseInt(offset as string)
     );
-    Logger.verbose(req.id + ' | ' + 'JobController | DeleteAccount | End');
+    Logger.verbose(req.id + ' | ' + 'JobController | GetJobApplicants | End');
     return sendResponse(res, getJobResponse);
   });
   public applyToJob = handleAsync(async (req: Request, res: Response) => {
     Logger.verbose(req.id + ' | ' + 'JobController | ApplyToJob | Start');
     const getJobResponse = await this.jobsService.applyToJob(
       req.params.id,
-      req.user.ProfileId
+      req.user.ProfileId,
+      req.user.email
     );
     Logger.verbose(req.id + ' | ' + 'JobController | ApplyToJob | End');
     return sendResponse(res, getJobResponse);

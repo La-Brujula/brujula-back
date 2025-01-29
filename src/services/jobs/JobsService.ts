@@ -93,27 +93,34 @@ export default class JobsService {
     Logger.verbose('JobService | getJobApplicants | Finished');
     return ServiceResponse.ok(profiles);
   }
-  public async applyToJob(jobId: string, profileId: string) {
+  public async applyToJob(jobId: string, profileId: string, accountId: string) {
     Logger.verbose(`JobService | applyToJob | Started`);
 
     Logger.verbose('JobService | applyToJob | Verifying profile exists');
-    const ProfileRecord = await this.profileRepository.findById(profileId);
+    const ProfileRecord = await this.profileRepository.getLean(profileId);
     if (ProfileRecord === null) throw ProfileErrors.profileDoesNotExist;
 
     Logger.verbose('JobService | applyToJob | Getting opening by id');
-    const JobRecord = await this.jobsRepository.getLean(jobId);
+    const JobRecord = await this.jobsRepository.findById(jobId);
     if (JobRecord === null) throw JobsErrors.jobDoesNotExist;
     Logger.verbose('JobService | applyToJob | Got opening');
+
+    Logger.verbose('JobService | applyToJob | Checking if own opening');
+    if (JobRecord.job.requesterId === accountId)
+      throw JobsErrors.cantApplyToOwnOpening;
 
     Logger.verbose('JobService | applyToJob | Checking if already applied');
     const alreadyApplied = await JobRecord.$has('applicants', profileId);
     if (alreadyApplied === null) throw JobsErrors.openingAlreadyApplied;
 
     Logger.verbose('JobService | applyToJob | Adding profile as applicant');
-    await JobRecord.$add('applicants', profileId);
+    const res = await this.jobsRepository.addApplicantToJob(
+      JobRecord.id,
+      ProfileRecord.id
+    );
 
     Logger.verbose('JobService | applyToJob | Finished');
-    return ServiceResponse.ok(undefined, 201);
+    return ServiceResponse.ok(res, 201);
   }
   public async getCreatedJobs(profileId: string) {
     Logger.verbose(`JobService | getCreatedJobs | Started`);

@@ -126,6 +126,12 @@ export class ProfileRepository {
       transaction,
     });
   }
+  async getLean(id: string, transaction?: Transaction) {
+    return await this.db.findByPk(id, {
+      attributes: ['id'],
+      transaction,
+    });
+  }
 
   concatColumns(...columns: string[]) {
     return fn(

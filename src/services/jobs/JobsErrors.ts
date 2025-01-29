@@ -9,6 +9,11 @@ const JobsErrors = {
     'Already applied to opening',
     409
   ),
+  cantApplyToOwnOpening: new ServiceError(
+    'JE05',
+    'Cannot apply to own opening',
+    400
+  ),
   badToken: new ServiceError('JE05', 'Bad jwt token', 401),
   couldNotDeleteAccount: new ServiceError(
     'JE06',

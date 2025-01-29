@@ -330,6 +330,13 @@ export class JobsRepository {
     });
     return record;
   }
+  async addApplicantToJob(jobOpeningId: string, profileId: string) {
+    return await this.applicantsDb.create({
+      jobOpeningId: jobOpeningId,
+      profileId: profileId,
+    });
+  }
+
   async getJobApplicants(id: string, limit: number = 10, offset: number = 0) {
     const applicants = await this.applicantsDb.findAll({
       where: {
