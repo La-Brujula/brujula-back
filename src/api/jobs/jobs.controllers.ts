@@ -24,7 +24,7 @@ export default class JobsController {
   public createJob = handleAsync(async (req: Request, res: Response) => {
     Logger.verbose(req.id + ' | ' + 'JobController | CreateJob | Start');
     const userInput: TJobPosting = req.body;
-    userInput.requesterId = req.user?.email || 'dpalme@me.com';
+    userInput.requesterId = req.user?.email;
     const jobCreationResponse = await this.jobsService.createJob(userInput);
     Logger.verbose(req.id + ' | ' + 'JobController | CreateJob | End');
     return sendResponse(res, jobCreationResponse);
@@ -34,6 +34,25 @@ export default class JobsController {
     Logger.verbose(req.id + ' | ' + 'JobController | GetJob | Start');
     const getJobResponse = await this.jobsService.getJob(req.params.id);
     Logger.verbose(req.id + ' | ' + 'JobController | GetJob | End');
+    return sendResponse(res, getJobResponse);
+  });
+  public updateJob = handleAsync(async (req: Request, res: Response) => {
+    Logger.verbose(req.id + ' | ' + 'JobController | UpdateJob | Start');
+    const getJobResponse = await this.jobsService.updateJob(
+      req.params.id,
+      req.body,
+      req.user
+    );
+    Logger.verbose(req.id + ' | ' + 'JobController | UpdateJob | End');
+    return sendResponse(res, getJobResponse);
+  });
+  public deleteJob = handleAsync(async (req: Request, res: Response) => {
+    Logger.verbose(req.id + ' | ' + 'JobController | DeleteJob | Start');
+    const getJobResponse = await this.jobsService.deleteJob(
+      req.params.id,
+      req.user
+    );
+    Logger.verbose(req.id + ' | ' + 'JobController | DeleteJob | End');
     return sendResponse(res, getJobResponse);
   });
   public getJobApplicants = handleAsync(async (req: Request, res: Response) => {

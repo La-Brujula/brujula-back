@@ -4,12 +4,17 @@ import { JobMapper } from '@/models/jobs/jobsMapper';
 import JobsErrors from './JobsErrors';
 import Logger from '@/providers/Logger';
 import { JobsRepository } from '@/repositories/JobsRepository';
-import { IJobSearchOptions, TJobPosting } from '@/models/jobs/jobs';
+import {
+  IJobSearchOptions,
+  TJobPosting,
+  TJobUpdateRequest,
+} from '@/models/jobs/jobs';
 import { IPaginationParams } from '@/shared/classes/pagination';
 import { ProfileRepository } from '@/repositories/ProfileRepository';
 import ProfileErrors from '../profile/ProfileErrors';
 import { ProfileMapper } from '@/models/profile/profileMapper';
 import { AccountRepository } from '@/repositories/AuthenticationRepository';
+import { IAccountDTO } from '@/models/authentication/authentication';
 
 @Service()
 export default class JobsService {
@@ -24,7 +29,15 @@ export default class JobsService {
 
   public async createJob(newJob: TJobPosting) {
     Logger.verbose('JobService | addJob | Start');
-
+    if (!newJob.requesterId) {
+      throw JobsErrors.needVerifiedAccountToCreateJob;
+    }
+    const profile = await this.profileRepository.findByEmail(
+      newJob.requesterId
+    );
+    if (!profile?.verified) {
+      throw JobsErrors.needVerifiedAccountToCreateJob;
+    }
     const jobOpenings = await this.jobsRepository.create(newJob);
 
     Logger.verbose('JobService | addJob | Finished');
@@ -50,17 +63,51 @@ export default class JobsService {
     );
   }
 
-  public async deleteJob(jobId: string) {
+  public async updateJob(
+    jobId: string,
+    updatedJob: TJobUpdateRequest,
+    requestingUser: IAccountDTO
+  ) {
+    Logger.verbose('JobService | updateJob | Start');
+    Logger.verbose('JobService | updateJob | Checking if Job exists');
+    const job = await this.jobsRepository.findById(jobId);
+    if (job === null) {
+      throw JobsErrors.jobDoesNotExist;
+    }
+
+    if (job.job.requesterId !== requestingUser.email) {
+      throw JobsErrors.notOwnJob;
+    }
+
+    Logger.verbose('JobService | updateJob | Updating Job');
+    const UpdatedJob = await this.jobsRepository.update(jobId, {
+      ...job,
+      ...updatedJob,
+    });
+    if (!UpdatedJob) {
+      throw JobsErrors.couldNotDeleteJob;
+    }
+    Logger.verbose('JobService | updateJob | Updated Job');
+    Logger.verbose('JobService | updateJob | Finished');
+    return ServiceResponse.ok(UpdatedJob, 202);
+  }
+
+  public async deleteJob(jobId: string, requestingUser: IAccountDTO) {
     Logger.verbose('JobService | deleteJob | Start');
     Logger.verbose('JobService | deleteJob | Checking if Job exists');
-    if (!(await this.jobExists(jobId))) {
+    const job = await this.jobsRepository.findById(jobId);
+    if (job === null) {
       throw JobsErrors.jobDoesNotExist;
+    }
+
+    if (job.job.requesterId !== requestingUser.email) {
+      throw JobsErrors.notOwnJob;
     }
 
     Logger.verbose('JobService | deleteJob | Deleting Job');
     const JobDeleted = await this.jobsRepository.delete(jobId);
     if (!JobDeleted) {
-      throw JobsErrors.couldNotDeleteAccount;
+      throw JobsErrors.couldNotDeleteJob;
     }
     Logger.verbose('JobService | deleteJob | Deleted Job');
     Logger.verbose('JobService | deleteJob | Finished');

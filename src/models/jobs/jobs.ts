@@ -2,6 +2,7 @@ import {
   JobOpening,
   JobPosting,
   JobPostingCreateRequest,
+  UpdateJobRequest,
 } from '@/api/jobs/jobs.validators';
 import { z } from 'zod';
 import { EmploymentEnum, WorkRadiusEnum } from './enums';
@@ -11,6 +12,7 @@ import { IBasicProfile, IProfileDTO } from '../profile/profile';
 export type TJobPosting = z.infer<typeof JobPosting>;
 export type TJobOpening = z.infer<typeof JobOpening>;
 export type TJobPostingCreateRequest = z.infer<typeof JobPostingCreateRequest>;
+export type TJobUpdateRequest = z.infer<typeof UpdateJobRequest>;
 
 export type TJobAlertDTO = TJobOpening & {
   id: string;

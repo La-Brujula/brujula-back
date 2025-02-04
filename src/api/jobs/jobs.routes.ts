@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import {
   GetJobApplicantsRequest,
-  GetJobRequest,
+  JobIdInParamsRequest,
   JobPostingCreateRequest,
   JobSearchRequest,
 } from './jobs.validators';
@@ -20,7 +20,11 @@ export default (app: Router) => {
 
   router
     .route('/')
-    .get(zodValidationHandler(JobSearchRequest), jobsController.getJobs)
+    .get(
+      authenticateRequest,
+      zodValidationHandler(JobSearchRequest),
+      jobsController.getJobs
+    )
     .post(
       authenticateRequest,
       zodValidationHandler(JobPostingCreateRequest),
@@ -31,7 +35,13 @@ export default (app: Router) => {
 
   router
     .route('/:id')
-    .get(zodValidationHandler(GetJobRequest), jobsController.getJob);
+    .all(authenticateRequest)
+    .get(zodValidationHandler(JobIdInParamsRequest), jobsController.getJob)
+    .patch(zodValidationHandler(JobIdInParamsRequest), jobsController.updateJob)
+    .delete(
+      zodValidationHandler(JobIdInParamsRequest),
+      jobsController.deleteJob
+    );
   router
     .route('/:id/applicants')
     .get(
@@ -39,7 +49,7 @@ export default (app: Router) => {
       jobsController.getJobApplicants
     )
     .post(
-      zodValidationHandler(GetJobRequest),
+      zodValidationHandler(JobIdInParamsRequest),
       authenticateRequest,
       jobsController.applyToJob
     );

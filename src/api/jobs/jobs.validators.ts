@@ -1,5 +1,5 @@
 import { EMPLOYMENT_OPTIONS, WORK_RADIUS_OPTIONS } from '@/models/jobs/enums';
-import { z } from 'zod';
+import { string, z } from 'zod';
 import { zodValidatePagination } from '../profile/profile.validators';
 
 export const JobOpening = z.object({
@@ -71,7 +71,7 @@ export const JobSearchRequest = z.object({
   query: JobSearchOptions,
 });
 
-export const GetJobRequest = z.object({
+export const JobIdInParamsRequest = z.object({
   params: z.object({ id: z.string() }),
 });
 export const GetJobApplicantsRequest = z.object({
@@ -79,5 +79,49 @@ export const GetJobApplicantsRequest = z.object({
   query: z.object({
     limit: z.optional(z.number().max(10).min(0)).default(10),
     offset: z.optional(z.number().min(0)).default(0),
+  }),
+});
+
+export const UpdateJobRequest = z.object({
+  params: z.object({ id: z.string() }),
+  body: z.object({
+    job: z.object({
+      contactStartDate: z.optional(
+        z.date({
+          coerce: true,
+          required_error: 'invalid_type',
+        })
+      ),
+      contactEndDate: z.optional(z.date({ coerce: true })),
+      contactEmail: z.optional(z.string().email()),
+      whatsapp: z.optional(z.string()),
+      phoneNumbers: z.optional(z.string().transform((v) => [v])),
+      location: z.optional(z.enum(['online', 'hybrid', 'in-person'])),
+      workRadius: z.optional(z.enum(WORK_RADIUS_OPTIONS)).catch(undefined),
+      specialRequirements: z.optional(z.string()),
+      employment: z.optional(z.enum(EMPLOYMENT_OPTIONS)),
+      description: z.optional(z.string().max(1024)),
+      jobStartDate: z.optional(z.date({ coerce: true }).catch(new Date())),
+      jobEndDate: z.optional(z.date({ coerce: true })).catch(undefined),
+      budgetLow: z.optional(z.number({ coerce: true })),
+      budgetHigh: z.optional(z.number({ coerce: true })),
+      benefits: z.optional(z.string().max(1024)),
+      notes: z.optional(z.string().max(1024)),
+    }),
+    activity: z.optional(z.string().length(6)),
+    count: z.optional(z.number({ coerce: true })),
+    probono: z.optional(z.boolean()),
+    gender: z.optional(z.enum(['male', 'female', 'other'])).catch(undefined),
+    ageRangeMin: z.optional(z.number({ coerce: true }).min(0).max(120)),
+    ageRangeMax: z.optional(z.number({ coerce: true }).min(0).max(120)),
+    school: z.optional(z.string()),
+    languages: z.optional(
+      z.array(
+        z.object({
+          lang: z.string().length(2),
+          proficiency: z.enum(['basic', 'intermediate', 'advanced', 'native']),
+        })
+      )
+    ),
   }),
 });
