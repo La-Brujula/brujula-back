@@ -298,6 +298,7 @@ export class JobsRepository {
             'ageRangeMax',
             'school',
             'languages',
+            'id',
           ],
         },
         {
