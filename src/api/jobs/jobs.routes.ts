@@ -4,6 +4,7 @@ import {
   JobIdInParamsRequest,
   JobPostingCreateRequest,
   JobSearchRequest,
+  UpdateJobRequest,
 } from './jobs.validators';
 import Container from 'typedi';
 import JobsController from './jobs.controllers';
@@ -37,7 +38,7 @@ export default (app: Router) => {
     .route('/:id')
     .all(authenticateRequest)
     .get(zodValidationHandler(JobIdInParamsRequest), jobsController.getJob)
-    .patch(zodValidationHandler(JobIdInParamsRequest), jobsController.updateJob)
+    .patch(zodValidationHandler(UpdateJobRequest), jobsController.updateJob)
     .delete(
       zodValidationHandler(JobIdInParamsRequest),
       jobsController.deleteJob
