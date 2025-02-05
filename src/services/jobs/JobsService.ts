@@ -87,9 +87,12 @@ export default class JobsService {
     if (!UpdatedJob) {
       throw JobsErrors.couldNotDeleteJob;
     }
+
+    const detailedJob = await this.jobsRepository.findById(jobId);
+    if (detailedJob === null) throw JobsErrors.jobDoesNotExist;
     Logger.verbose('JobService | updateJob | Updated Job');
     Logger.verbose('JobService | updateJob | Finished');
-    return ServiceResponse.ok(UpdatedJob, 202);
+    return ServiceResponse.ok(JobMapper.buildDto(detailedJob), 202);
   }
 
   public async deleteJob(jobId: string, requestingUser: IAccountDTO) {
