@@ -20,7 +20,6 @@ export default (app: Router) => {
     standardHeaders: 'draft-7', // draft-6: `RateLimit-*` headers; draft-7: combined `RateLimit` header
     legacyHeaders: false, // Disable the `X-RateLimit-*` headers.
   });
-  router.use(authenticateRequest);
 
   const emailVerificationController = Container.get(
     EmailVerificationController
@@ -29,6 +28,7 @@ export default (app: Router) => {
   router.post(
     '/send',
     limiter,
+    authenticateRequest,
     emailVerificationController.sendVerificationEmail
   );
   router.post(
