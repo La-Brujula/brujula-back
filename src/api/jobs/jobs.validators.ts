@@ -1,6 +1,7 @@
 import { EMPLOYMENT_OPTIONS, WORK_RADIUS_OPTIONS } from '@/models/jobs/enums';
 import { string, z } from 'zod';
 import { zodValidatePagination } from '../profile/profile.validators';
+import { removeDiacritics } from '@/shared/utils/removeDiacritics';
 
 export const JobOpening = z.object({
   activity: z.string().length(6),
@@ -58,7 +59,9 @@ export const JobPostingCreateRequest = z.object({
 });
 
 export const JobSearchOptions = z.object({
-  query: z.optional(z.string()).catch(undefined),
+  query: z
+    .optional(z.string().transform((v) => removeDiacritics(v)))
+    .catch(undefined),
   activity: z.optional(z.string()).catch(undefined),
   location: z.optional(z.string()).catch(undefined),
   probono: z.optional(z.boolean()).catch(undefined),

@@ -20,6 +20,7 @@ import { Cast, Col, Fn } from 'sequelize/types/utils';
 import Job, { JobOpening, JobOpeningsApplicants } from '@/database/schemas/Job';
 import {
   IJobSearchOptions,
+  IJobsSearchOptions,
   TJobOpening,
   TJobPosting,
 } from '@/models/jobs/jobs';
@@ -151,7 +152,10 @@ export class JobsRepository {
       probono,
       employment,
       requesterId,
-    }: IJobSearchOptions,
+      primaryActivity,
+      secondaryActivity,
+      thirdActivity,
+    }: IJobsSearchOptions,
     { limit = 10, offset = 0 }: IPaginationParams
   ): Promise<[number, JobOpening[]]> {
     const searchQuery = {
@@ -186,14 +190,32 @@ export class JobsRepository {
       END`),
           'DESC',
         ],
+        [
+          literal(`CASE
+      ${primaryActivity ? `WHEN "activity" ILIKE ${this.sequelize.escape(primaryActivity + '%')} THEN 3` : ''}
+      ${secondaryActivity ? `WHEN "activity" ILIKE ${this.sequelize.escape(secondaryActivity + '%')} THEN 2` : ''}
+      ${thirdActivity ? `WHEN "activity" ILIKE ${this.sequelize.escape(thirdActivity + '%')} THEN 1` : ''}
+      WHEN TRUE THEN 0
+      END`),
+          'DESC',
+        ],
         ['createdAt', 'DESC'],
       ].filter((a) => !!a) as Order,
       limit,
       offset,
       include: [
         {
+          model: this.applicantsDb,
+          as: 'applicants',
+          attributes: ['profileId'],
+        },
+        {
           model: this.jobsDb,
           as: 'job',
+          where: {
+            contactEndDate: { [Op.gte]: new Date() },
+          },
+          required: true,
           attributes: [
             'requesterId',
             'contactStartDate',
@@ -299,6 +321,13 @@ export class JobsRepository {
             'school',
             'languages',
             'id',
+          ],
+          include: [
+            {
+              model: this.applicantsDb,
+              as: 'applicants',
+              attributes: ['profileId'],
+            },
           ],
         },
         {

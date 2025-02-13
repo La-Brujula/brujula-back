@@ -32,7 +32,7 @@ export default (app: Router) => {
       jobsController.createJob
     );
 
-  router.get('/me', authenticateRequest, jobsController.getAppliedJobs);
+  router.get('/me', authenticateRequest, jobsController.getCreatedJobs);
 
   router
     .route('/:id')

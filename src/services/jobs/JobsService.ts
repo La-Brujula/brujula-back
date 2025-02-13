@@ -49,8 +49,16 @@ export default class JobsService {
       limit: params.limit,
       offset: params.offset,
     };
+
+    const user = await this.profileRepository.findById(params.userId);
+    Logger.verbose('ProfileService | Search | Querying repository');
     const [total_jobs, jobs] = await this.jobsRepository.find(
-      params,
+      {
+        ...params,
+        primaryActivity: user?.primaryActivity,
+        secondaryActivity: user?.secondaryActivity,
+        thirdActivity: user?.thirdActivity,
+      },
       pagination
     );
     const profiles = JobMapper.toList(jobs);

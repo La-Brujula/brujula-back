@@ -15,7 +15,10 @@ export default class JobsController {
     const userInput = req.query as unknown as IJobSearchOptions &
       IPaginationParams;
     Logger.verbose(req.id + ' | ' + 'JobController | GetJobs | Start');
-    const jobsSearchResponse = await this.jobsService.getJobs(userInput);
+    const jobsSearchResponse = await this.jobsService.getJobs({
+      ...userInput,
+      userId: req.user.ProfileId,
+    });
     Logger.verbose(req.id + ' | ' + 'JobController | GetJobs | End');
 
     return sendResponse(res, jobsSearchResponse);
@@ -76,12 +79,12 @@ export default class JobsController {
     Logger.verbose(req.id + ' | ' + 'JobController | ApplyToJob | End');
     return sendResponse(res, getJobResponse);
   });
-  public getAppliedJobs = handleAsync(async (req: Request, res: Response) => {
-    Logger.verbose(req.id + ' | ' + 'JobController | GetAppliedJobs | Start');
+  public getCreatedJobs = handleAsync(async (req: Request, res: Response) => {
+    Logger.verbose(req.id + ' | ' + 'JobController | GetCreatedJobs | Start');
     const getJobResponse = await this.jobsService.getCreatedJobs(
       req.user.email
     );
-    Logger.verbose(req.id + ' | ' + 'JobController | GetAppliedJobs | End');
+    Logger.verbose(req.id + ' | ' + 'JobController | GetCreatedJobs | End');
     return sendResponse(res, getJobResponse);
   });
 }

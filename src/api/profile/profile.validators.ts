@@ -1,4 +1,5 @@
 import { ENUMERATABLE_FIELDS } from '@/models/profile/profile';
+import { removeDiacritics } from '@/shared/utils/removeDiacritics';
 import { body, param, query } from 'express-validator';
 import { z } from 'zod';
 
@@ -8,7 +9,8 @@ export const bodyMatchesSearchQuery = [
     .trim()
     .isString()
     .trim()
-    .toLowerCase(),
+    .toLowerCase()
+    .customSanitizer((v) => removeDiacritics(v)),
   query('name')
     .optional({ values: 'falsy' })
     .trim()

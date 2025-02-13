@@ -54,6 +54,9 @@ export type TJobListDTO = TJobOpening & {
   description: string;
   jobStartDate: Date;
   jobEndDate: Date;
+  contactStartDate: Date;
+  contactEndDate: Date;
+  applicantsCount: number;
 };
 
 export interface IJobSearchOptions {
@@ -63,4 +66,16 @@ export interface IJobSearchOptions {
   probono: boolean;
   employment: EmploymentEnum;
   requesterId: string;
+  userId: string;
+}
+export interface IJobsSearchOptions {
+  query: string;
+  activity: string;
+  location: string;
+  probono: boolean;
+  employment: EmploymentEnum;
+  requesterId: string;
+  primaryActivity?: string;
+  secondaryActivity?: string;
+  thirdActivity?: string;
 }

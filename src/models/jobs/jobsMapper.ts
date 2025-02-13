@@ -5,8 +5,6 @@ import { ProfileMapper } from '../profile/profileMapper';
 
 export class JobMapper implements IMapper<TJobPosting> {
   static toDto(opening: { [k: string]: any }): TJobDetailDTO {
-    console.log(opening);
-
     return {
       id: opening.id,
       count: opening.count,
@@ -118,6 +116,9 @@ export class JobMapper implements IMapper<TJobPosting> {
       ageRangeMin: opening.ageRangeMin,
       ageRangeMax: opening.ageRangeMax,
       jobStartDate: opening.job.jobStartDate,
+      contactStartDate: opening.job.contactStartDate,
+      contactEndDate: opening.job.contactEndDate,
+      applicantsCount: opening.applicants.length,
     };
   }
 }
