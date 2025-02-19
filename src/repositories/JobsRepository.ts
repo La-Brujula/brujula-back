@@ -135,12 +135,7 @@ export class JobsRepository {
 
   buildTextSearchQuery(query: string) {
     return literal(
-      '(' +
-        [
-          `strict_word_similarity('${query}', "JobOpenings"."searchString") * 4`,
-          `strict_word_similarity('${query}', CONCAT("description", "notes", "specialRequirements")) * 2`,
-        ].join(' + ') +
-        ')'
+      `strict_word_similarity('${query}', "JobOpenings"."searchString") * 4`
     );
   }
 
@@ -162,7 +157,7 @@ export class JobsRepository {
       where: {
         [Op.and]: [
           !!requesterId && where('requesterId', '==', requesterId),
-          !!query && where(this.buildTextSearchQuery(query), Op.gte, 0.9),
+          !!query && where(this.buildTextSearchQuery(query), Op.gte, 0.4),
           !!activity && {
             openings: {
               [Op.any]: { activity: { [Op.iLike]: activity + '%' } },
