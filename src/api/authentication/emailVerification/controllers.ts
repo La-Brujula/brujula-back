@@ -31,8 +31,8 @@ export default class EmailVerificationController {
     Logger.verbose(
       req.id + ' | AuthenticationController | VerifyEmail | Start'
     );
-    const { code, email } = req.body as { code: string; email: string };
-    const verifyEmailResponse = await this.authService.verifyEmail(email, code);
+    const { code } = req.body as { code: string };
+    const verifyEmailResponse = await this.authService.verifyEmail(code);
     Logger.verbose(req.id + ' | AuthenticationController | VerifyEmail | End');
     return sendResponse(res, verifyEmailResponse);
   });

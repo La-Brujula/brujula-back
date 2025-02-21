@@ -7,8 +7,7 @@ import rateLimit from 'express-rate-limit';
 import handleValidationErrors from '@/shared/utils/handleValidationErrors';
 
 const verifyRequestBody = [
-  body('code').notEmpty().bail().isString().isLength({ min: 32, max: 32 }),
-  body('email').notEmpty().bail().isString().isEmail(),
+  body('code').notEmpty().bail().isString().isLength({ min: 64, max: 64 }),
 ];
 
 const router: Router = Router();

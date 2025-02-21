@@ -15,6 +15,8 @@ import { generateToken, hashPassword } from '@/shared/utils/jwtUtils';
 import { randomBytes } from 'crypto';
 import { sendEmail } from '@/providers/Emailer';
 import { ProfileRepository } from '@/repositories/ProfileRepository';
+import { Transaction } from 'sequelize';
+import Database from '@/database/Database';
 
 @Service()
 export default class AuthenticationService {
@@ -23,7 +25,9 @@ export default class AuthenticationService {
     @Inject('AccountRepository')
     private readonly authenticationRepository: AccountRepository,
     @Inject('ProfileRepository')
-    private readonly profileRepository: ProfileRepository
+    private readonly profileRepository: ProfileRepository,
+    @Inject('Database')
+    private readonly database: Database
   ) {
     this.tokenSecret = config.application.jwtSecret;
 
@@ -216,43 +220,63 @@ export default class AuthenticationService {
 
   public async sendVerificationEmail(email: string) {
     Logger.verbose('AccountService | sendVerificationEmail | Started');
+
+    const transaction = await this.database.sequelize.transaction();
+
+    const profile = await this.authenticationRepository.findByEmail(
+      email,
+      transaction
+    );
+    if (profile === null) throw AuthenticationErrors.accountDoesNotExist;
+
     Logger.verbose('AccountService | sendVerificationEmail | Creating pin');
-    const pin = randomBytes(16).toString('hex');
+    const pin = randomBytes(32).toString('hex');
 
     Logger.verbose('AccountService | sendVerificationEmail | Updating user');
-    await this.authenticationRepository.update(email, {
-      emailVerificationPin: pin,
-      emailVerificationPinExpirationTime: new Date(
-        new Date().valueOf() + 30 * 60 * 1000
-      ),
-    });
-
-    const verifyEmailLink = `${config.application.frontend_url}/auth/verify-email?code=${pin}&email=${email}`;
-
-    await sendEmail(email, 'Verifica tu correo de La Brújula', {
-      template: 'emailVerification',
-      context: {
-        verifyEmailLink: verifyEmailLink,
+    await this.authenticationRepository.update(
+      email,
+      {
+        emailVerificationPin: pin,
+        emailVerificationPinExpirationTime: new Date(
+          new Date().valueOf() + 60 * 60 * 1000
+        ),
       },
+      transaction
+    );
+
+    const verifyEmailLink = `${config.application.frontend_url}/auth/verify-email?code=${pin}`;
+
+    transaction.afterCommit(async () => {
+      console.log(verifyEmailLink);
+      await sendEmail(email, 'Verifica tu correo de La Brújula', {
+        template: 'emailVerification',
+        context: {
+          verifyEmailLink: verifyEmailLink,
+        },
+      });
     });
+
+    await transaction.commit();
     Logger.verbose('AccountService | sendVerificationEmail | Finished');
     return new ServiceResponse(true, 201, undefined, verifyEmailLink);
   }
 
-  public async verifyEmail(email: string, code: string) {
+  public async verifyEmail(code: string) {
     Logger.verbose('AccountService | verifyEmail | Started');
     Logger.verbose('AccountService | verifyEmail | Creating pin');
 
-    const user = await this.authenticationRepository.findByEmail(email);
-    if (user === null) {
-      throw AuthenticationErrors.accountDoesNotExist;
+    const transaction = await this.database.sequelize.transaction();
+
+    const account = await this.authenticationRepository.findByVerificationCode(
+      code,
+      transaction
+    );
+    if (account === null) {
+      throw AuthenticationErrors.cantVerifyCodeExpiration;
     }
 
-    if (!user.emailVerificationPin) {
-      throw AuthenticationErrors.verificationCodeNotFound;
-    }
     const expirationTimestamp =
-      user?.emailVerificationPinExpirationTime?.valueOf();
+      account?.emailVerificationPinExpirationTime?.valueOf();
 
     if (expirationTimestamp === undefined) {
       throw AuthenticationErrors.cantVerifyCodeExpiration;
@@ -261,19 +285,25 @@ export default class AuthenticationService {
       throw AuthenticationErrors.emailVerificationExpired;
     }
 
-    if (user.emailVerificationPin !== code) {
-      throw AuthenticationErrors.emailVerificationExpired;
-    }
-
     Logger.verbose('AccountService | verifyEmail | Updating user');
-    await this.authenticationRepository.update(email, {
-      emailVerificationPin: undefined,
-      emailVerificationPinExpirationTime: undefined,
-    });
-    await this.profileRepository.update(user.ProfileId, {
-      verified: true,
-    });
+    await this.authenticationRepository.update(
+      account.email,
+      {
+        emailVerificationPin: undefined,
+        emailVerificationPinExpirationTime: undefined,
+      },
+      transaction
+    );
+    await this.profileRepository.update(
+      account.ProfileId,
+      {
+        verified: true,
+      },
+      transaction
+    );
     Logger.verbose('AccountService | verifyEmail | Finished');
+
+    await transaction.commit();
     return new ServiceResponse(true, 200);
   }
 
