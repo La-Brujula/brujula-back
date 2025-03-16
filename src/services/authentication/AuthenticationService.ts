@@ -45,9 +45,16 @@ export default class AuthenticationService {
     Logger.verbose(
       'AccountService | addAccount | Checking if account already exists'
     );
+
+    const tx = await this.database.sequelize.transaction();
+
     if (await this.userExists(newAccount.email)) {
       throw AuthenticationErrors.existingAccount;
     }
+
+    tx.afterCommit(() => {
+      this.sendVerificationEmail(newAccount.email);
+    });
 
     Logger.verbose('AccountService | addAccount | Hashing password');
     const hashedPassword = hashPassword(newAccount.email, newAccount.password);
@@ -55,13 +62,14 @@ export default class AuthenticationService {
     let profile = await this.getProfileIdIfExists(newAccount.email);
 
     if (profile === null) {
-      profile = await this.profileRepository.create({
-        email: newAccount.email,
-        type: newAccount.type || 'fisica',
-      });
+      profile = await this.profileRepository.create(
+        {
+          email: newAccount.email,
+          type: newAccount.type || 'fisica',
+        },
+        tx
+      );
     }
-
-    this.sendVerificationEmail(newAccount.email);
 
     Logger.verbose('AccountService | addAccount | Creating account');
     const accountRecord = await this.authenticationRepository.create(
@@ -71,13 +79,16 @@ export default class AuthenticationService {
         type: newAccount.type,
         referal: newAccount.referal,
       },
-      profile
+      profile,
+      tx
     );
     Logger.verbose('AccountService | addAccount | Created account');
 
     const account: IAccountDTO = AccountMapper.toDto(accountRecord);
     Logger.verbose('AccountService | addAccount | Generating token');
     const token = generateToken(accountRecord, this.tokenSecret);
+
+    tx.commit();
 
     Logger.verbose('AccountService | addAccount | Finished');
     return ServiceResponse.ok({ account, token });
@@ -116,22 +127,29 @@ export default class AuthenticationService {
     Logger.verbose(
       'AccountService | deleteAccount | Checking if account exists'
     );
+
+    const tx = await this.database.sequelize.transaction();
+
     if (!(await this.userExists(accountInfo.email))) {
       throw AuthenticationErrors.accountDoesNotExist;
     }
 
     Logger.verbose('AccountService | deleteAccount | Deleting account');
     const accountDeleted = await this.authenticationRepository.delete(
-      accountInfo.email
+      accountInfo.email,
+      tx
     );
     const profileDeleted = await this.profileRepository.delete(
-      accountInfo.ProfileId
+      accountInfo.ProfileId,
+      tx
     );
     if (!accountDeleted || !profileDeleted) {
       throw AuthenticationErrors.couldNotDeleteAccount;
     }
     Logger.verbose('AccountService | deleteAccount | Deleted account');
     Logger.verbose('AccountService | deleteAccount | Finished');
+
+    tx.commit();
     return new ServiceResponse(accountDeleted, 202);
   }
 
@@ -154,9 +172,14 @@ export default class AuthenticationService {
   public async createPasswordResetPin(email: string) {
     Logger.verbose('AccountService | createPasswordResetPin | Started');
     Logger.verbose('AccountService | createPasswordResetPin | Getting user');
+
+    const tx = await this.database.sequelize.transaction();
+
     const user = await this.authenticationRepository.findByEmail(email);
 
-    if (!user) throw AuthenticationErrors.accountDoesNotExist;
+    if (!user) {
+      throw AuthenticationErrors.accountDoesNotExist;
+    }
 
     Logger.verbose(
       'AccountService | createPasswordResetPin | Checking a new pin can be created'
@@ -168,22 +191,30 @@ export default class AuthenticationService {
     const pin = randomBytes(32).toString('hex');
 
     Logger.verbose('AccountService | createPasswordResetPin | Updating user');
-    await this.authenticationRepository.update(email, {
-      passwordResetPin: pin,
-      passwordResetPinExpirationTime: new Date(
-        new Date().valueOf() + 45 * 60 * 1000
-      ),
-      passwordRecoveryAttempts: user.passwordRecoveryAttempts + 1,
-    });
+    await this.authenticationRepository.update(
+      email,
+      {
+        passwordResetPin: pin,
+        passwordResetPinExpirationTime: new Date(
+          new Date().valueOf() + 45 * 60 * 1000
+        ),
+        passwordRecoveryAttempts: user.passwordRecoveryAttempts + 1,
+      },
+      tx
+    );
 
     const passwordResetLink = `${config.application.frontend_url}/auth/new-password?code=${pin}&email=${email}`;
 
-    await sendEmail(email, 'Reinicia tu contraseña', {
-      template: 'passwordReset',
-      context: {
-        passwordResetLink: passwordResetLink,
-      },
+    tx.afterCommit(() => {
+      sendEmail(email, 'Reinicia tu contraseña', {
+        template: 'passwordReset',
+        context: {
+          passwordResetLink: passwordResetLink,
+        },
+      });
     });
+
+    tx.commit();
     Logger.verbose('AccountService | createPasswordResetPin | Finished');
     return new ServiceResponse(true, 201);
   }
@@ -191,29 +222,42 @@ export default class AuthenticationService {
   public async sendMigrateAccountEmail(email: string) {
     Logger.verbose('AccountService | sendMigrateAccountEmail | Started');
     Logger.verbose('AccountService | sendMigrateAccountEmail | Getting user');
+
+    const tx = await this.database.sequelize.transaction();
+
     const user = await this.authenticationRepository.findByEmail(email);
 
-    if (!user) throw AuthenticationErrors.accountDoesNotExist;
+    if (!user) {
+      throw AuthenticationErrors.accountDoesNotExist;
+    }
 
     Logger.verbose('AccountService | sendMigrateAccountEmail | Creating pin');
     const pin = randomBytes(32).toString('hex');
 
     Logger.verbose('AccountService | sendMigrateAccountEmail | Updating user');
-    await this.authenticationRepository.update(email, {
-      passwordResetPin: pin,
-      passwordResetPinExpirationTime: new Date(
-        new Date().valueOf() + 7 * 24 * 60 * 60 * 1000
-      ),
-    });
+    await this.authenticationRepository.update(
+      email,
+      {
+        passwordResetPin: pin,
+        passwordResetPinExpirationTime: new Date(
+          new Date().valueOf() + 7 * 24 * 60 * 60 * 1000
+        ),
+      },
+      tx
+    );
 
     const passwordResetLink = `${config.application.frontend_url}/auth/new-password?code=${pin}&email=${email}`;
 
-    await sendEmail(email, 'Te damos la bienvenida a La Brújula 2024', {
-      template: 'migrationNotice',
-      context: {
-        passwordResetLink: passwordResetLink,
-      },
+    tx.afterCommit(() => {
+      sendEmail(email, 'Te damos la bienvenida a La Brújula 2024', {
+        template: 'migrationNotice',
+        context: {
+          passwordResetLink: passwordResetLink,
+        },
+      });
     });
+
+    tx.commit();
     Logger.verbose('AccountService | sendMigrateAccountEmail | Finished');
     return new ServiceResponse(true, 201);
   }
@@ -221,13 +265,12 @@ export default class AuthenticationService {
   public async sendVerificationEmail(email: string) {
     Logger.verbose('AccountService | sendVerificationEmail | Started');
 
-    const transaction = await this.database.sequelize.transaction();
+    const tx = await this.database.sequelize.transaction();
 
-    const profile = await this.authenticationRepository.findByEmail(
-      email,
-      transaction
-    );
-    if (profile === null) throw AuthenticationErrors.accountDoesNotExist;
+    const profile = await this.authenticationRepository.findByEmail(email, tx);
+    if (profile === null) {
+      throw AuthenticationErrors.accountDoesNotExist;
+    }
 
     Logger.verbose('AccountService | sendVerificationEmail | Creating pin');
     const pin = randomBytes(32).toString('hex');
@@ -241,14 +284,13 @@ export default class AuthenticationService {
           new Date().valueOf() + 60 * 60 * 1000
         ),
       },
-      transaction
+      tx
     );
 
     const verifyEmailLink = `${config.application.frontend_url}/auth/verify-email?code=${pin}`;
 
-    transaction.afterCommit(async () => {
-      console.log(verifyEmailLink);
-      await sendEmail(email, 'Verifica tu correo de La Brújula', {
+    tx.afterCommit(() => {
+      sendEmail(email, 'Verifica tu correo de La Brújula', {
         template: 'emailVerification',
         context: {
           verifyEmailLink: verifyEmailLink,
@@ -256,7 +298,7 @@ export default class AuthenticationService {
       });
     });
 
-    await transaction.commit();
+    await tx.commit();
     Logger.verbose('AccountService | sendVerificationEmail | Finished');
     return new ServiceResponse(true, 201, undefined, verifyEmailLink);
   }
