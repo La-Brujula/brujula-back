@@ -4,6 +4,8 @@ import {
   IAuthenticationResponseBody,
   IAccountDTO,
   ISignupRequestBody,
+  IUpdateAccount,
+  IAccount,
 } from '@/models/authentication/authentication';
 import { AccountRepository } from '@/repositories/AuthenticationRepository';
 import { ServiceResponse } from '@/shared/classes/serviceResponse';
@@ -151,6 +153,35 @@ export default class AuthenticationService {
 
     tx.commit();
     return new ServiceResponse(accountDeleted, 202);
+  }
+  public async updateAccount(
+    email: string,
+    newAccountInfo: IUpdateAccount
+  ): Promise<ServiceResponse<boolean>> {
+    Logger.verbose('AccountService | updateAccount | Start');
+    Logger.verbose(
+      'AccountService | updateAccount | Checking if account exists'
+    );
+
+    const tx = await this.database.sequelize.transaction();
+    const account = await this.authenticationRepository.findByEmail(email);
+    if (!account) {
+      throw AuthenticationErrors.accountDoesNotExist;
+    }
+
+    Logger.verbose('AccountService | updateAccount | Updating account');
+    await this.authenticationRepository.update(email, newAccountInfo, tx);
+
+    const updatedAccount =
+      await this.authenticationRepository.findByEmail(email);
+    if (!account) {
+      throw AuthenticationErrors.accountDoesNotExist;
+    }
+    Logger.verbose('AccountService | updateAccount | Updated account');
+    Logger.verbose('AccountService | updateAccount | Finished');
+
+    tx.commit();
+    return ServiceResponse.ok(updatedAccount, 200);
   }
 
   public async getUser(
@@ -350,7 +381,7 @@ export default class AuthenticationService {
   }
 
   private async userExists(userEmail: string) {
-    const user = await this.authenticationRepository.findByEmail(userEmail);
+    const user = await this.authenticationRepository.existsByEmail(userEmail);
     return !!user;
   }
 

@@ -16,7 +16,6 @@ const router: Router = Router();
 export default (app: Router) => {
   app.use('/jobs', router);
 
-  // Apply the rate limiting middleware to all requests.
   const jobsController = Container.get(JobsController);
 
   router

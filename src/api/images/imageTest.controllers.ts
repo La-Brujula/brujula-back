@@ -13,7 +13,8 @@ export default class ImageTestControllers {
     );
     if (imageSaveResult === false) throw Error('Could not process image');
     const { link, ref } = imageSaveResult;
-    return res.status(202).json({ imageUrl: link, imageId: ref });
+    res.status(202).json({ imageUrl: link, imageId: ref });
+    return;
   });
 
   public getImage = handleAsync(async (req, res) => {

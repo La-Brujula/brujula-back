@@ -3,6 +3,7 @@ import {
   IAuthenticationRequestBody,
   IAuthenticationResponseBody,
   ISignupRequestBody,
+  IUpdateAccount,
 } from '@/models/authentication/authentication';
 import Logger from '@/providers/Logger';
 import AuthenticationService from '@/services/authentication/AuthenticationService';
@@ -49,6 +50,20 @@ export default class AuthenticationController {
       req.id + ' | ' + 'AuthenticationController | DeleteAccount | End'
     );
     return sendResponse(res, accountsDeleteAccountResponse);
+  });
+
+  public updateAccount = handleAsync(async (req: Request, res: Response) => {
+    Logger.verbose(
+      req.id + ' | ' + 'AuthenticationController | UpdateAccount | Start'
+    );
+    const userInput: IUpdateAccount = req.body;
+
+    const accountsUpdateAccountResponse: ServiceResponse<boolean> =
+      await this.authService.updateAccount(req.user.email, userInput);
+    Logger.verbose(
+      req.id + ' | ' + 'AuthenticationController | UpdateAccount | End'
+    );
+    return sendResponse(res, accountsUpdateAccountResponse);
   });
 
   public sendPasswordReset = handleAsync(

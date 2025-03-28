@@ -1,4 +1,4 @@
-import express from 'express';
+import express, { RequestHandler } from 'express';
 import cors from 'cors';
 import fileUpload from 'express-fileupload';
 import compression from 'compression';
@@ -29,10 +29,12 @@ class Express {
     this.express.use(cors({ credentials: true, preflightContinue: true }));
     this.express.use(express.json({ limit: '512kb' }));
     this.express.use(express.urlencoded({ extended: true }));
+    // @ts-expect-error
     this.express.use(compression());
     this.express.use(helmet({ contentSecurityPolicy: false, xssFilter: true }));
     this.express.use(morgan(requestLog));
     this.express.use(
+      // @ts-expect-error
       fileUpload({
         createParentPath: true,
         limits: {

@@ -233,8 +233,8 @@ export const validateProfileUpdate = [
   body('birthday').optional({ values: 'falsy' }).trim().isISO8601().toDate(),
   body('externalLinks').optional({ values: 'falsy' }).isArray(),
   body('externalLinks.*').optional({ values: 'falsy' }).isURL(),
+  body('whatsapp').optional({ values: 'falsy' }).isMobilePhone('any'),
   ...[
-    'whatsapp',
     'imdb',
     'facebook',
     'instagram',

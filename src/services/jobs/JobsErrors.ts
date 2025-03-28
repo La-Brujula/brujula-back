@@ -24,6 +24,11 @@ const JobsErrors = {
     'You can only edit or delete your own job postings',
     403
   ),
+  couldNotFindOpening: new ServiceError(
+    'JE08',
+    'Could not find opening to send alerts for',
+    500
+  ),
 };
 
 export default JobsErrors;

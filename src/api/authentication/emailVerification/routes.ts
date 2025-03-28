@@ -14,10 +14,10 @@ const router: Router = Router();
 export default (app: Router) => {
   app.use('/verifyEmail', router);
   const limiter = rateLimit({
-    windowMs: 60 * 1000, // 1 minute
-    limit: 1, // Limit each IP to 1 requests per `window` (here, per 1 minute).
-    standardHeaders: 'draft-7', // draft-6: `RateLimit-*` headers; draft-7: combined `RateLimit` header
-    legacyHeaders: false, // Disable the `X-RateLimit-*` headers.
+    windowMs: 60 * 1000,
+    limit: 1,
+    standardHeaders: 'draft-7',
+    legacyHeaders: false,
   });
 
   const emailVerificationController = Container.get(

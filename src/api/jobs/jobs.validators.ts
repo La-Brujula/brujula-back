@@ -1,5 +1,5 @@
 import { EMPLOYMENT_OPTIONS, WORK_RADIUS_OPTIONS } from '@/models/jobs/enums';
-import { string, z } from 'zod';
+import { z } from 'zod';
 import { zodValidatePagination } from '../profile/profile.validators';
 import { removeDiacritics } from '@/shared/utils/removeDiacritics';
 
@@ -23,19 +23,16 @@ export const JobOpening = z.object({
 
 export const JobPosting = z
   .object({
-    // Post
     requesterId: z.optional(z.string().max(128)),
     contactStartDate: z.date({ coerce: true, required_error: 'invalid_type' }),
     contactEndDate: z.date({ coerce: true }),
     contactEmail: z.optional(z.string().email()),
     whatsapp: z.optional(z.string()),
     phoneNumbers: z.optional(z.string().transform((v) => [v])),
-    // Service
     openings: z.array(JobOpening).max(10),
     location: z.enum(['online', 'hybrid', 'in-person']),
     workRadius: z.optional(z.enum(WORK_RADIUS_OPTIONS)).catch(undefined),
     specialRequirements: z.optional(z.string()),
-    // Proyect
     employment: z.enum(EMPLOYMENT_OPTIONS),
     description: z.string().max(1024),
     jobStartDate: z.date({ coerce: true }).catch(new Date()),

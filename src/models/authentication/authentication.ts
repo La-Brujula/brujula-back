@@ -1,9 +1,13 @@
-export type AccountRoleTypes = 'user' | 'editor' | 'manager' | 'admin';
+export const ACCOUNT_ROLES = ['user', 'editor', 'manager', 'admin'] as const;
+export type AccountRoleType = (typeof ACCOUNT_ROLES)[number];
+
+export const ACCOUNT_CONTACT_METHODS = ['email', 'whatsapp'] as const;
+export type AccountContactMethod = (typeof ACCOUNT_CONTACT_METHODS)[number];
 
 export interface IAccount {
   email: string;
   password: string;
-  role: AccountRoleTypes;
+  role: AccountRoleType;
   passwordResetPinExpirationTime?: Date;
   passwordResetPin?: string;
   passwordRecoveryAttempts: number;
@@ -11,22 +15,28 @@ export interface IAccount {
   emailVerificationPinExpirationTime?: Date;
   emailVerificationPin?: string;
   referal?: string;
+  contactMethod: AccountContactMethod;
+  jobNotifications: boolean;
 }
 
 export interface IUpdateAccount {
   password?: string;
-  role?: AccountRoleTypes;
+  role?: AccountRoleType;
   passwordResetPinExpirationTime?: Date | null;
   passwordResetPin?: string | null;
   passwordRecoveryAttempts?: number;
   emailVerificationPinExpirationTime?: Date;
   emailVerificationPin?: string;
+  contactMethod?: AccountContactMethod;
+  jobNotifications: boolean;
 }
 
 export interface IAccountDTO {
   email: string;
-  role: AccountRoleTypes;
+  role: AccountRoleType;
   ProfileId: string;
+  contactMethod?: AccountContactMethod;
+  jobNotifications?: boolean;
 }
 
 export interface IAuthenticationRequestBody {
@@ -53,6 +63,11 @@ export interface IResetPasswordRequestBody {
 export interface IChangePasswordRequestBody {
   password: string;
   resetPin: string;
+}
+
+export interface IUpdateAccountRequest {
+  contactMethod?: AccountContactMethod;
+  jobNotifications: boolean;
 }
 
 export interface IJwtToken {

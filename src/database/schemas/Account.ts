@@ -1,6 +1,9 @@
 import {
   IAccount,
-  AccountRoleTypes,
+  AccountRoleType,
+  ACCOUNT_ROLES,
+  AccountContactMethod,
+  ACCOUNT_CONTACT_METHODS,
 } from '@/models/authentication/authentication';
 import Profile from './Profile';
 import {
@@ -30,8 +33,14 @@ export default class Account extends Model implements IAccount {
   @Column password!: string;
   @Column referal!: string;
 
-  @Column(DataType.ENUM('user', 'editor', 'manager', 'admin'))
-  role!: AccountRoleTypes;
+  @Column(DataType.ENUM(...ACCOUNT_ROLES))
+  role!: AccountRoleType;
+
+  @Column(DataType.ENUM(...ACCOUNT_CONTACT_METHODS))
+  contactMethod: AccountContactMethod = 'email';
+
+  @Column
+  jobNotifications: boolean = true;
 
   @IsInt
   @Column

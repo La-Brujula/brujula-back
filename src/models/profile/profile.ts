@@ -108,7 +108,7 @@ export interface IProfileSearchQuery {
   associations?: string;
   certifications?: string;
   email?: string;
-  country: string;
+  country?: string;
 }
 
 export type EnumeratableField = 'city' | 'state' | 'university';

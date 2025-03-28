@@ -18,5 +18,6 @@ export class ErrorHandler extends Error {
 
 export const handleError = (err: ErrorHandler, _: Request, res: Response) => {
   const { statusCode, message } = err;
-  return res.status(statusCode).json({ isSuccess: false, error: message });
+  res.status(statusCode).json({ isSuccess: false, error: message });
+  return;
 };

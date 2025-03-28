@@ -15,6 +15,9 @@ import ProfileErrors from '../profile/ProfileErrors';
 import { ProfileMapper } from '@/models/profile/profileMapper';
 import { AccountRepository } from '@/repositories/AuthenticationRepository';
 import { IAccountDTO } from '@/models/authentication/authentication';
+import { JobOpening } from '@/database/schemas/Job';
+import sendNotification from '@/providers/Notifier';
+import { getTitle } from '@/shared/utils/areaUtils';
 
 @Service()
 export default class JobsService {
@@ -27,19 +30,115 @@ export default class JobsService {
     private readonly accountRepository: AccountRepository
   ) {}
 
+  private async sendJobAlerts(jobOpenings: JobOpening[]) {
+    Logger.verbose('JobService | sendJobAlerts | Start');
+
+    for (let i = 0; i < jobOpenings.length; i++) {
+      Logger.verbose(`JobService | sendJobAlerts | Opening ${i} | Start`);
+      const opening = await this.jobsRepository.findById(jobOpenings[i].id);
+      if (opening === null) throw JobsErrors.couldNotFindOpening;
+      Logger.verbose(
+        `JobService | sendJobAlerts | Opening ${i} | Getting contacts to notify`
+      );
+
+      const usersToAlert =
+        await this.accountRepository.getUsersToAlertOfOpening({
+          activity: opening.activity,
+          ...(() => {
+            switch (opening.job.workRadius) {
+              case 'local':
+                return {
+                  country: opening.job.requester.profile.country,
+                  state: opening.job.requester.profile.state,
+                  city: opening.job.requester.profile.city,
+                };
+              case 'state':
+                return {
+                  country: opening.job.requester.profile.country,
+                  state: opening.job.requester.profile.state,
+                };
+              case 'national':
+                return {
+                  country: opening.job.requester.profile.country,
+                };
+              case 'international':
+                return {};
+            }
+          })(),
+          remote: opening.job.location !== 'in-person' ? true : undefined,
+          probono: opening.probono ? true : undefined,
+          gender: opening.gender ? opening.gender : undefined,
+        });
+      Logger.verbose(
+        `JobService | sendJobAlerts | Opening ${i} | Got ${usersToAlert.length} users to alert`
+      );
+
+      const openingVariables = {
+        '2': getTitle(opening.activity, opening.gender ?? 'other'),
+        '3': (() => {
+          switch (opening.job.workRadius) {
+            case 'local':
+              return opening.job.requester.profile.city!;
+            case 'state':
+              return opening.job.requester.profile.state!;
+            case 'national':
+              return opening.job.requester.profile.country!;
+            case 'international':
+              return 'cualquier ubicación';
+          }
+        })(),
+        '4':
+          opening.job.requester.profile.nickName ??
+          opening.job.requester.profile.fullName ??
+          opening.job.requester.profile.primaryEmail,
+        '5': opening.id,
+      };
+
+      for (var k = 0; k < usersToAlert.length; k++) {
+        const user = usersToAlert[i];
+        let contactMethod = user.account?.contactMethod ?? 'email';
+        const phoneNumber = user.whatsapp || user.phoneNumbers?.[0];
+        if (contactMethod === 'whatsapp' && phoneNumber === undefined)
+          contactMethod = 'email';
+        sendNotification({
+          contactMethod: contactMethod,
+          email: user.account?.email!,
+          phone: phoneNumber!,
+          twilioTemplate: 'HXd11b836bac99f9c4a600f3b03aae7701',
+          emailTemplate: 'jobOpening',
+          subject: 'Nueva vacante en La Brújula',
+          context: {
+            contentVariables: {
+              '1': user.nickName ?? user.firstName ?? user.primaryEmail,
+              ...openingVariables,
+            },
+          },
+          text: '',
+        });
+      }
+    }
+  }
+
   public async createJob(newJob: TJobPosting) {
     Logger.verbose('JobService | addJob | Start');
     if (!newJob.requesterId) {
       throw JobsErrors.needVerifiedAccountToCreateJob;
     }
+    const transaction = await this.jobsRepository.sequelize.transaction();
     const profile = await this.profileRepository.findByEmail(
-      newJob.requesterId
+      newJob.requesterId,
+      transaction
     );
     if (!profile?.verified) {
       throw JobsErrors.needVerifiedAccountToCreateJob;
     }
-    const jobOpenings = await this.jobsRepository.create(newJob);
+    const jobOpenings = await this.jobsRepository.create(newJob, transaction);
 
+    transaction.afterCommit(() => {
+      this.sendJobAlerts(jobOpenings);
+    });
+
+    await transaction.commit();
     Logger.verbose('JobService | addJob | Finished');
     return ServiceResponse.ok(jobOpenings);
   }
@@ -55,9 +154,6 @@ export default class JobsService {
     const [total_jobs, jobs] = await this.jobsRepository.find(
       {
         ...params,
-        primaryActivity: user?.primaryActivity,
-        secondaryActivity: user?.secondaryActivity,
-        thirdActivity: user?.thirdActivity,
       },
       pagination
     );

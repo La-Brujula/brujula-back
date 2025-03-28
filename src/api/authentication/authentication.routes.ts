@@ -6,6 +6,7 @@ import handleValidationErrors from '@/shared/utils/handleValidationErrors';
 import authenticateRequest from '@/shared/middleware/authenticateRequest';
 import isAdmin from '@/shared/middleware/isAdmin';
 import EmailVerificationRoutes from './emailVerification';
+import { ACCOUNT_CONTACT_METHODS } from '@/models/authentication/authentication';
 
 const bodyMatchesIAuthenticationRequest = () => [
   body('email').isEmail(),
@@ -66,12 +67,19 @@ export default (app: Router) => {
   router
     .route('/me')
     .get(authController.me)
+    .patch(
+      body('jobNotifications').optional().toBoolean(),
+      body('contactMethod').optional().isIn(ACCOUNT_CONTACT_METHODS),
+      handleValidationErrors,
+      authController.updateAccount
+    )
     .delete(authController.deleteAccount);
 
   router.post(
     '/sendResetEmail',
     isAdmin,
     body('email').isEmail(),
+    handleValidationErrors,
     authController.sendMigrationPasswordReset
   );
 };

@@ -57,7 +57,7 @@ export default class ProfileController {
   public getAllMatchingProfiles = handleAsync(
     async (req: Request, res: Response) => {
       const query: IProfileSearchQuery & IPaginationParams = req.body;
-      // @ts-ignore
+      // @ts-expect-error
       query.limit = 1000000;
       const searchResults = await this.profileService.search(query);
       return sendResponse(res, searchResults);

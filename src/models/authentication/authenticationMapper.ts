@@ -10,6 +10,8 @@ export class AccountMapper implements IMapper<IAccount> {
       email: account.email,
       role: account.role,
       ProfileId: account.ProfileId,
+      jobNotifications: account.jobNotifications,
+      contactMethod: account.contactMethod,
     };
   }
 }

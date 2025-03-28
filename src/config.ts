@@ -9,12 +9,11 @@ if (process.env.NODE_ENV !== 'production' && envConfig.error) {
 
 export default {
   env: process.env.NODE_ENV || 'development',
-  // Logs
+
   logs: {
     level: process.env.LOG_LEVEL || 'silly',
   },
 
-  // API config
   api: {
     prefix: process.env.API_PREFIX || '/',
     errorReportingEmail: process.env.ERROR_EMAIL || '',
@@ -56,5 +55,7 @@ export default {
   twilio: {
     accountSid: process.env.TWILIO_ACCOUNT_SID,
     authToken: process.env.TWILIO_AUTH_TOKEN,
+    number: process.env.TWILIO_PHONE,
+    messagingService: process.env.TWILIO_MESSAGING_SERVICE,
   },
 };

@@ -188,7 +188,7 @@ export default class Profile extends Model implements IProfile {
   )
   recommendations!: Profile[];
 
-  @HasOne(() => Account, 'email')
+  @HasOne(() => Account, 'ProfileId')
   account?: Account;
 
   @HasMany(() => JobOpeningsApplicants, 'jobOpeningId')

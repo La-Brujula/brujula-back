@@ -2,5 +2,6 @@ import { Response } from 'express';
 import { ServiceResponse } from '../classes/serviceResponse';
 
 export function sendResponse(res: Response, serviceRes: ServiceResponse<any>) {
-  return res.status(serviceRes.httpStatus).json(serviceRes.toJson());
+  res.status(serviceRes.httpStatus).json(serviceRes.toJson());
+  return;
 }

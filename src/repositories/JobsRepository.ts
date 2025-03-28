@@ -271,7 +271,7 @@ export class JobsRepository {
     const jobPosting = await this.jobsDb.create(userInput, { transaction });
     const jobOpenings = await Promise.all(
       userInput.openings.map((opening) =>
-        this.db.create({ ...opening, jobId: jobPosting.id })
+        this.db.create({ ...opening, jobId: jobPosting.id }, { transaction })
       )
     );
     return jobOpenings;

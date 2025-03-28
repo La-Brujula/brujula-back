@@ -42,11 +42,11 @@ export async function sendEmail(
   content: {
     text?: string;
     template: string;
-    context?: any;
+    context?: Record<string, string | number>;
   }
 ): Promise<boolean> {
   Emailer.sendMail({
-    from: '"La Brújula" <no-reply@labrujula.com.mx>', // sender address
+    from: '"La Brújula" <no-reply@labrujula.com.mx>',
     to,
     subject,
     text: content.text,
@@ -54,6 +54,8 @@ export async function sendEmail(
     template: content.template,
     context: content.context,
   });
-  Logger.info(`Sent email to ${to}`);
+  Logger.verbose(
+    `Sent email ${content.template} with subject ${subject}, params ${JSON.stringify(content.context)}, and text ${content.text} to ${to}`
+  );
   return true;
 }

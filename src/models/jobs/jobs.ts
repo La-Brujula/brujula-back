@@ -8,7 +8,6 @@ import { z } from 'zod';
 import { EmploymentEnum, WorkRadiusEnum } from './enums';
 import { IBasicProfile, IProfileDTO } from '../profile/profile';
 
-// extract the inferred type
 export type TJobPosting = z.infer<typeof JobPosting>;
 export type TJobOpening = z.infer<typeof JobOpening>;
 export type TJobPostingCreateRequest = z.infer<typeof JobPostingCreateRequest>;
