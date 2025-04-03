@@ -1,4 +1,5 @@
 import Logger from '@/providers/Logger';
+import cluster from 'cluster';
 import { Request, Response } from 'express';
 
 export default function requestLog(tokens: any, req: Request, res: Response) {
@@ -8,9 +9,10 @@ export default function requestLog(tokens: any, req: Request, res: Response) {
   Logger.log(
     level,
     [
-      req.id,
+      cluster.worker?.id,
       statusCode,
       method,
+      req.id,
       decodeURIComponent(req.originalUrl),
       `| ${tokens['response-time'](req, res)} ms`,
     ].join(' ')

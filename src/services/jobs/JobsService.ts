@@ -124,23 +124,28 @@ export default class JobsService {
     if (!newJob.requesterId) {
       throw JobsErrors.needVerifiedAccountToCreateJob;
     }
-    const transaction = await this.jobsRepository.sequelize.transaction();
-    const profile = await this.profileRepository.findByEmail(
-      newJob.requesterId,
-      transaction
-    );
-    if (!profile?.verified) {
-      throw JobsErrors.needVerifiedAccountToCreateJob;
+    const tx = await this.jobsRepository.sequelize.transaction();
+    try {
+      const profile = await this.profileRepository.findByEmail(
+        newJob.requesterId,
+        tx
+      );
+      if (!profile?.verified) {
+        throw JobsErrors.needVerifiedAccountToCreateJob;
+      }
+      const jobOpenings = await this.jobsRepository.create(newJob, tx);
+
+      tx.afterCommit(() => {
+        this.sendJobAlerts(jobOpenings);
+      });
+
+      await tx.commit();
+      Logger.verbose('JobService | addJob | Finished');
+      return ServiceResponse.ok(jobOpenings);
+    } catch (e) {
+      tx.rollback();
+      throw e;
     }
-    const jobOpenings = await this.jobsRepository.create(newJob, transaction);
-
-    transaction.afterCommit(() => {
-      this.sendJobAlerts(jobOpenings);
-    });
-
-    await transaction.commit();
-    Logger.verbose('JobService | addJob | Finished');
-    return ServiceResponse.ok(jobOpenings);
   }
 
   public async getJobs(params: IJobSearchOptions & IPaginationParams) {
