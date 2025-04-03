@@ -280,7 +280,7 @@ export default class AuthenticationService {
     const passwordResetLink = `${config.application.frontend_url}/auth/new-password?code=${pin}&email=${email}`;
 
     tx.afterCommit(() => {
-      sendEmail(email, 'Te damos la bienvenida a La Brújula 2024', {
+      sendEmail(email, 'Te damos la bienvenida a La Brújula', {
         template: 'migrationNotice',
         context: {
           passwordResetLink: passwordResetLink,
