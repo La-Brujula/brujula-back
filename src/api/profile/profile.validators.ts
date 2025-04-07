@@ -233,7 +233,10 @@ export const validateProfileUpdate = [
   body('birthday').optional({ values: 'falsy' }).trim().isISO8601().toDate(),
   body('externalLinks').optional({ values: 'falsy' }).isArray(),
   body('externalLinks.*').optional({ values: 'falsy' }).isURL(),
-  body('whatsapp').optional({ values: 'falsy' }).isMobilePhone('any'),
+  body('whatsapp')
+    .optional({ values: 'falsy' })
+    .customSanitizer((value) => value.replace(/\s|-/g, ''))
+    .isMobilePhone('any'),
   ...[
     'imdb',
     'facebook',
