@@ -154,12 +154,9 @@ export default class JobsService {
       offset: params.offset,
     };
 
-    const user = await this.profileRepository.findById(params.userId);
     Logger.verbose('ProfileService | Search | Querying repository');
     const [total_jobs, jobs] = await this.jobsRepository.find(
-      {
-        ...params,
-      },
+      params,
       pagination
     );
     const profiles = JobMapper.toList(jobs);
@@ -312,3 +309,18 @@ export default class JobsService {
     return (await this.jobsRepository.findById(jobId)) !== null;
   }
 }
+
+// sendNotification({
+//   contactMethod: 'whatsapp',
+//   phone: '+5213327106107',
+//   twilioTemplate: 'HXd11b836bac99f9c4a600f3b03aae7701',
+//   context: {
+//     contentVariables: {
+//       '1': 'Levario',
+//       '2': 'Guionista',
+//       '3': 'cualquier ubicación',
+//       '4': 'El mismísimo Gallo de Oro',
+//       '5': '1e8318c6-e28b-4e4d-a886-30ca848b3afb',
+//     },
+//   },
+// });

@@ -17,7 +17,7 @@ export default (app: Router) => {
     windowMs: 60 * 1000,
     limit: 1,
     standardHeaders: 'draft-7',
-    legacyHeaders: false,
+    legacyHeaders: true,
   });
 
   const emailVerificationController = Container.get(

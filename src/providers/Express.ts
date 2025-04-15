@@ -26,6 +26,7 @@ class Express {
   }
 
   setMiddleware() {
+    this.express.set('trust proxy', true);
     this.express.use(cors({ credentials: true, preflightContinue: true }));
     this.express.use(express.json({ limit: '512kb' }));
     this.express.use(express.urlencoded({ extended: true }));
