@@ -45,15 +45,15 @@ export async function sendEmail(
     context?: Record<string, string | number>;
   }
 ): Promise<boolean> {
-  // Emailer.sendMail({
-  //   from: '"La Brújula" <no-reply@labrujula.com.mx>',
-  //   to,
-  //   subject,
-  //   text: content.text,
-  //   // @ts-ignore
-  //   template: content.template,
-  //   context: content.context,
-  // });
+  Emailer.sendMail({
+    from: '"La Brújula" <no-reply@labrujula.com.mx>',
+    to,
+    subject,
+    text: content.text,
+    // @ts-ignore
+    template: content.template,
+    context: content.context,
+  });
   Logger.verbose(
     `Sent email ${content.template} with subject ${subject}, params ${JSON.stringify(content.context)}, and text ${content.text} to ${to}`
   );
