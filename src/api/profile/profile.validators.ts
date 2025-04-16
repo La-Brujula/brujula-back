@@ -66,7 +66,11 @@ export const bodyMatchesSearchQuery = [
     .trim()
     .toLowerCase(),
   query('email').optional({ values: 'falsy' }).trim().isString().isEmail(),
-  query('country').optional({ values: 'falsy' }).trim().isISO31661Alpha2(),
+  query('country')
+    .optional({ values: 'falsy' })
+    .trim()
+    .isISO31661Alpha2()
+    .default('MX'),
 ];
 
 export const zodValidatePagination = {
@@ -178,7 +182,11 @@ export const validateProfileUpdate = [
     .trim()
     .isString()
     .isLength({ min: 1, max: 64 }),
-  body('country').optional({ values: 'falsy' }).trim().isISO31661Alpha2(),
+  body('country')
+    .optional({ values: 'falsy' })
+    .trim()
+    .isISO31661Alpha2()
+    .default('MX'),
   body('postalCode').optional({ values: 'falsy' }).trim().isPostalCode('any'),
   body('workRadius')
     .optional({ values: 'falsy' })
